@@ -1,0 +1,65 @@
+<div class="page-header">
+  <div>
+    <h1>Vehicles</h1>
+    <p class="page-header__sub">Track every vehicle in your workshop</p>
+  </div>
+  <button mat-flat-button color="primary" (click)="add()">
+    <mat-icon>add</mat-icon>
+    Add Vehicle
+  </button>
+</div>
+
+<div class="toolbar-row">
+  <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+    <mat-label>Search vehicles</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input matInput placeholder="Make, model, plate or VIN" [(ngModel)]="searchTerm" (ngModelChange)="onSearch()" />
+  </mat-form-field>
+</div>
+
+<div class="surface">
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="40" /></div>
+  } @else if (vehicles().length === 0) {
+    <div class="empty-state">
+      <mat-icon>no_crash</mat-icon>
+      <p>No vehicles found. Add a vehicle to get started.</p>
+    </div>
+  } @else {
+    <div class="table-scroll">
+    <table mat-table [dataSource]="vehicles()" class="aw-table">
+      <ng-container matColumnDef="customer">
+        <th mat-header-cell *matHeaderCellDef>Customer</th>
+        <td mat-cell *matCellDef="let row">{{ row.customerName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="vehicle">
+        <th mat-header-cell *matHeaderCellDef>Vehicle</th>
+        <td mat-cell *matCellDef="let row" class="cell-strong">{{ row.year }} {{ row.make }} {{ row.model }}</td>
+      </ng-container>
+      <ng-container matColumnDef="plate">
+        <th mat-header-cell *matHeaderCellDef>Plate</th>
+        <td mat-cell *matCellDef="let row">{{ row.licensePlate || '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="mileage">
+        <th mat-header-cell *matHeaderCellDef>Mileage</th>
+        <td mat-cell *matCellDef="let row">{{ row.mileage != null ? (row.mileage + ' mi') : '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="color">
+        <th mat-header-cell *matHeaderCellDef>Color</th>
+        <td mat-cell *matCellDef="let row">{{ row.color || '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="cell-actions">
+          <button mat-icon-button (click)="remove(row)" matTooltip="Delete" aria-label="Delete vehicle">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+    </div>
+  }
+</div>

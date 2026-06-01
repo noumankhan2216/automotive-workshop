@@ -1,0 +1,6 @@
+@AutomotiveWorkshop.Api_HostAddress = http://localhost:5182
+
+GET {{AutomotiveWorkshop.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

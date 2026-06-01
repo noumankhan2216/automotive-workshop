@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY AutomotiveWorkshop.sln ./
+COPY src/AutomotiveWorkshop.Api/AutomotiveWorkshop.Api.csproj src/AutomotiveWorkshop.Api/
+COPY src/AutomotiveWorkshop.Application/AutomotiveWorkshop.Application.csproj src/AutomotiveWorkshop.Application/
+COPY src/AutomotiveWorkshop.Domain/AutomotiveWorkshop.Domain.csproj src/AutomotiveWorkshop.Domain/
+COPY src/AutomotiveWorkshop.Infrastructure/AutomotiveWorkshop.Infrastructure.csproj src/AutomotiveWorkshop.Infrastructure/
+
+RUN dotnet restore src/AutomotiveWorkshop.Api/AutomotiveWorkshop.Api.csproj
+
+COPY src/ src/
+RUN dotnet publish src/AutomotiveWorkshop.Api/AutomotiveWorkshop.Api.csproj -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "AutomotiveWorkshop.Api.dll"]

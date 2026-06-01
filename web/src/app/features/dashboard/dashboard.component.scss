@@ -1,0 +1,97 @@
+.kpi-section {
+  margin-bottom: 2rem;
+}
+.kpi-section__title {
+  margin-bottom: 0.85rem;
+  color: var(--aw-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .kpi-section {
+    margin-bottom: 1.5rem;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  .kpi {
+    padding: 1rem 1.1rem;
+    gap: 0.85rem;
+  }
+  .kpi__icon {
+    width: 46px;
+    height: 46px;
+  }
+  .kpi__value {
+    font-size: 1.45rem;
+  }
+}
+
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--aw-surface);
+  border: 1px solid var(--aw-border);
+  border-radius: var(--aw-radius);
+  box-shadow: var(--aw-shadow);
+  padding: 1.25rem 1.35rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25);
+}
+
+.kpi__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.kpi__icon mat-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.kpi__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.kpi__label {
+  font-size: 0.8rem;
+  color: var(--aw-text-muted);
+  font-weight: 500;
+}
+.kpi__value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.kpi__hint {
+  font-size: 0.75rem;
+  color: var(--aw-text-muted);
+  margin-top: 0.15rem;
+}
+
+.tone-blue   .kpi__icon { background: #dbeafe; color: #2563eb; }
+.tone-indigo .kpi__icon { background: #e0e7ff; color: #4f46e5; }
+.tone-green  .kpi__icon { background: #d1fae5; color: #059669; }
+.tone-amber  .kpi__icon { background: #fef3c7; color: #d97706; }
+.tone-teal   .kpi__icon { background: #ccfbf1; color: #0d9488; }
+.tone-red    .kpi__icon { background: #fee2e2; color: #dc2626; }

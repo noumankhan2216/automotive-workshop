@@ -1,0 +1,47 @@
+<div class="page-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="page-header__sub">A snapshot of your workshop performance</p>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="44" /></div>
+} @else if (summary()) {
+  <section class="kpi-section">
+    <h2 class="kpi-section__title">Revenue</h2>
+    <div class="kpi-grid">
+      @for (card of revenueCards(); track card.label) {
+        <div class="kpi" [class]="card.tone">
+          <div class="kpi__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <div class="kpi__body">
+            <span class="kpi__label">{{ card.label }}</span>
+            <span class="kpi__value">{{ card.value }}</span>
+            @if (card.hint) { <span class="kpi__hint">{{ card.hint }}</span> }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="kpi-section">
+    <h2 class="kpi-section__title">Operations</h2>
+    <div class="kpi-grid">
+      @for (card of opsCards(); track card.label) {
+        <div class="kpi" [class]="card.tone">
+          <div class="kpi__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <div class="kpi__body">
+            <span class="kpi__label">{{ card.label }}</span>
+            <span class="kpi__value">{{ card.value }}</span>
+            @if (card.hint) { <span class="kpi__hint">{{ card.hint }}</span> }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <div class="surface empty-state">
+    <mat-icon>cloud_off</mat-icon>
+    <p>Couldn't load dashboard data. Is the API running?</p>
+  </div>
+}

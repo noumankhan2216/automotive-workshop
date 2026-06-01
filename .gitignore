@@ -1,0 +1,29 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Node / Angular
+node_modules/
+dist/
+.angular/
+*.log
+
+## Environment
+.env
+.env.local
+appsettings.Local.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.idea/
+*.swp
+*.swo
+
+## Database
+postgres_data/

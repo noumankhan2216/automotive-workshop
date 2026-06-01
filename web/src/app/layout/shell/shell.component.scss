@@ -1,0 +1,265 @@
+.shell {
+  height: 100vh;
+}
+
+.shell__sidenav {
+  width: 248px;
+  border: none;
+  background: linear-gradient(180deg, var(--aw-sidebar-from), var(--aw-sidebar-to));
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Brand --- */
+.shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.1rem 1.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.shell__logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.8);
+  flex-shrink: 0;
+}
+.shell__logo mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.shell__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.shell__brand-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.shell__brand-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+/* --- Navigation --- */
+.shell__nav {
+  flex: 1 1 auto;
+  padding: 0.5rem 0.6rem;
+  overflow-y: auto;
+
+  /* Material MDC list color tokens — this is what makes the labels/icons readable */
+  --mdc-list-list-item-label-text-color: #cbd5e1;
+  --mdc-list-list-item-leading-icon-color: #94a3b8;
+  --mdc-list-list-item-hover-label-text-color: #ffffff;
+  --mdc-list-list-item-hover-leading-icon-color: #ffffff;
+  --mdc-list-list-item-focus-label-text-color: #ffffff;
+  --mdc-list-list-item-hover-state-layer-color: #ffffff;
+  --mdc-list-list-item-hover-state-layer-opacity: 0.06;
+  --mat-list-active-indicator-color: transparent;
+}
+
+.shell__nav .mat-mdc-list-item {
+  height: 44px;
+  border-radius: 9px;
+  margin-bottom: 2px;
+}
+
+.shell__nav .mat-mdc-list-item .mdc-list-item__primary-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.shell__nav .mat-mdc-list-item .mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.shell__nav a.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(37, 99, 235, 0.16));
+  box-shadow: inset 3px 0 0 #3b82f6;
+
+  --mdc-list-list-item-label-text-color: #ffffff;
+  --mdc-list-list-item-leading-icon-color: #93c5fd;
+}
+.shell__nav a.active .mdc-list-item__primary-text {
+  font-weight: 600;
+}
+
+/* --- Sidebar footer (user) --- */
+.shell__sidefoot {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  margin: 0.5rem;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.shell__avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #475569, #334155);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.shell__userblock {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  overflow: hidden;
+}
+.shell__username {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell__userrole {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* --- Top toolbar --- */
+.shell__toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 60px;
+  padding: 0 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--aw-border);
+  color: var(--aw-text);
+}
+.shell__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--aw-text-muted);
+  font-size: 0.85rem;
+}
+.shell__crumbs mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+.shell__crumb-sep {
+  color: #cbd5e1;
+}
+.shell__crumb-active {
+  color: var(--aw-text);
+  font-weight: 600;
+}
+
+.shell__user {
+  margin-right: 0.9rem;
+  color: var(--aw-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.shell__logout {
+  --mdc-outlined-button-container-height: 36px;
+  color: var(--aw-text-muted);
+  border-color: var(--aw-border);
+}
+.shell__logout mat-icon {
+  margin-right: 0.3rem;
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+.shell__menu {
+  margin-right: 0.35rem;
+  margin-left: -0.4rem;
+  color: var(--aw-text);
+}
+
+/* Fill the area behind the (max-width) content on ultra-wide screens */
+mat-sidenav-content {
+  background: var(--aw-bg);
+}
+
+.shell__content {
+  padding: 1.75rem 2rem;
+  background: var(--aw-bg);
+  min-height: calc(100vh - 60px);
+  /* Keep content readable on extended / ultra-wide desktops */
+  max-width: 1680px;
+  margin-inline: auto;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---------- Tablet & below: collapsed overlay sidebar ---------- */
+@media (max-width: 1024px) {
+  .shell__toolbar {
+    padding: 0 1.25rem;
+  }
+  .shell__content {
+    padding: 1.5rem 1.5rem;
+  }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 600px) {
+  .shell__toolbar {
+    padding: 0 0.75rem;
+  }
+  .shell__user {
+    display: none;
+  }
+  .shell__logout {
+    min-width: 0;
+    width: 40px;
+    padding: 0;
+  }
+  .shell__logout .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .shell__logout-text {
+    display: none;
+  }
+  .shell__logout mat-icon {
+    margin: 0;
+  }
+  .shell__content {
+    padding: 1rem 1rem 2rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .shell__crumb-home,
+  .shell__crumb-sep {
+    display: none;
+  }
+}
