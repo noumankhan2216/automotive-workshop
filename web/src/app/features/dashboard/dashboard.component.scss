@@ -52,6 +52,11 @@
   transform: translateY(-2px);
   box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25);
 }
+.kpi--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
 
 .kpi__icon {
   display: grid;

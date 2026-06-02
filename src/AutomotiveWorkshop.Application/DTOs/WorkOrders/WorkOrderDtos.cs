@@ -46,10 +46,16 @@ public record WorkOrderDetailDto(
 public record WorkOrderItemDto(
     Guid Id,
     Guid? ServiceCatalogItemId,
+    Guid? PartId,
+    string? PartSku,
+    string? PartName,
+    bool PartsIssued,
     string Description,
     decimal Quantity,
     decimal UnitPrice,
     decimal LineTotal);
+
+public record IssuePartsResultDto(int LinesIssued, IReadOnlyList<string> Messages);
 
 public record CreateWorkOrderRequest(
     Guid CustomerId,
@@ -60,6 +66,7 @@ public record CreateWorkOrderRequest(
 
 public record CreateWorkOrderItemRequest(
     Guid? ServiceCatalogItemId,
+    Guid? PartId,
     string Description,
     decimal Quantity,
     decimal UnitPrice);

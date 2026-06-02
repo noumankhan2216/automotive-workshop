@@ -15,6 +15,7 @@ public interface IWorkOrderService
     Task<WorkOrderDetailDto?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<WorkOrderDetailDto> CreateAsync(CreateWorkOrderRequest request, CancellationToken ct);
     Task<WorkOrderDetailDto?> UpdateStatusAsync(Guid id, UpdateWorkOrderStatusRequest request, CancellationToken ct);
+    Task<IssuePartsResultDto?> IssuePartsAsync(Guid id, CancellationToken ct);
 }
 
 public class WorkOrderService : IWorkOrderService
@@ -67,7 +68,7 @@ public class WorkOrderService : IWorkOrderService
             .AsNoTracking()
             .Include(w => w.Customer)
             .Include(w => w.Vehicle)
-            .Include(w => w.Items)
+            .Include(w => w.Items).ThenInclude(i => i.Part)
             .Include(w => w.TimeEntries)
             .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted, ct);
 
@@ -90,6 +91,7 @@ public class WorkOrderService : IWorkOrderService
             Items = request.Items.Select(i => new WorkOrderItem
             {
                 ServiceCatalogItemId = i.ServiceCatalogItemId,
+                PartId = i.PartId,
                 Description = i.Description.Trim(),
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice
@@ -107,7 +109,7 @@ public class WorkOrderService : IWorkOrderService
         var workOrder = await _db.Set<WorkOrder>()
             .Include(w => w.Customer)
             .Include(w => w.Vehicle)
-            .Include(w => w.Items)
+            .Include(w => w.Items).ThenInclude(i => i.Part)
             .Include(w => w.TimeEntries)
             .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted, ct);
 
@@ -121,6 +123,60 @@ public class WorkOrderService : IWorkOrderService
 
         await _db.SaveChangesAsync(ct);
         return await MapToDetailDtoAsync(workOrder, ct);
+    }
+
+    public async Task<IssuePartsResultDto?> IssuePartsAsync(Guid id, CancellationToken ct)
+    {
+        var workOrder = await _db.Set<WorkOrder>()
+            .Include(w => w.Items).ThenInclude(i => i.Part)
+            .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted, ct);
+
+        if (workOrder is null) return null;
+
+        var messages = new List<string>();
+        var issued = 0;
+
+        foreach (var line in workOrder.Items.Where(i => i.PartId.HasValue && !i.PartsIssued))
+        {
+            var part = line.Part ?? await _db.Set<Part>().FirstOrDefaultAsync(p => p.Id == line.PartId && !p.IsDeleted, ct);
+            if (part is null)
+            {
+                messages.Add($"Part not found for line: {line.Description}");
+                continue;
+            }
+
+            var qty = -line.Quantity;
+            if (part.QuantityOnHand + qty < 0)
+            {
+                messages.Add($"Insufficient stock for {part.Sku} (need {line.Quantity}, have {part.QuantityOnHand})");
+                continue;
+            }
+
+            part.QuantityOnHand += qty;
+            part.UpdatedAt = DateTime.UtcNow;
+            line.PartsIssued = true;
+
+            _db.Set<PartStockTransaction>().Add(new PartStockTransaction
+            {
+                PartId = part.Id,
+                Type = PartStockTransactionType.Issue,
+                QuantityChange = qty,
+                QuantityAfter = part.QuantityOnHand,
+                WorkOrderId = workOrder.Id,
+                Notes = $"Issued to {workOrder.WorkOrderNumber}: {line.Description}"
+            });
+
+            issued++;
+            messages.Add($"Issued {line.Quantity}× {part.Sku}");
+        }
+
+        if (issued == 0 && messages.Count == 0)
+            messages.Add("No part lines to issue (link parts on line items first).");
+
+        workOrder.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+
+        return new IssuePartsResultDto(issued, messages);
     }
 
     private static WorkOrderDto MapToDto(WorkOrder w, string? assignedName) => new(
@@ -154,10 +210,13 @@ public class WorkOrderService : IWorkOrderService
             w.ScheduledStartAt, w.ScheduledEndAt, w.BayLabel,
             w.CustomerNotes, w.InternalNotes,
             w.OpenedAt, w.CompletedAt,
-            w.Items.Select(i => new WorkOrderItemDto(
-                i.Id, i.ServiceCatalogItemId, i.Description, i.Quantity, i.UnitPrice, i.LineTotal)).ToList(),
+            w.Items.Select(MapItemDto).ToList(),
             timeDtos,
             Math.Round(totalHours, 2),
             w.Items.Sum(i => i.LineTotal));
     }
+
+    private static WorkOrderItemDto MapItemDto(WorkOrderItem i) => new(
+        i.Id, i.ServiceCatalogItemId, i.PartId, i.Part?.Sku, i.Part?.Name, i.PartsIssued,
+        i.Description, i.Quantity, i.UnitPrice, i.LineTotal);
 }

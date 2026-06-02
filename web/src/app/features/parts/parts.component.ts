@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -39,6 +40,7 @@ export class PartsComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(true);
   readonly parts = signal<Part[]>([]);
@@ -47,6 +49,9 @@ export class PartsComponent implements OnInit {
   readonly displayedColumns = ['sku', 'name', 'category', 'onHand', 'reorder', 'price', 'actions'];
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('lowStock') === '1') {
+      this.lowStockOnly = true;
+    }
     this.load();
   }
 

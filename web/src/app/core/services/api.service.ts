@@ -32,6 +32,7 @@ import {
   TechnicianUser,
   TimeEntry,
   UpdatePartRequest,
+  IssuePartsResult,
   UpdateWorkOrderScheduleRequest,
   WorkOrder,
   WorkOrderDetail,
@@ -134,6 +135,10 @@ export class ApiService {
 
   updateWorkOrderStatus(id: string, status: WorkOrderStatus) {
     return this.http.patch<WorkOrder>(`${this.baseUrl}/work-orders/${id}/status`, { status });
+  }
+
+  issueWorkOrderParts(id: string) {
+    return this.http.post<IssuePartsResult>(`${this.baseUrl}/work-orders/${id}/issue-parts`, {});
   }
 
   getInvoices(status?: InvoiceStatus, page = 1, pageSize = 50) {

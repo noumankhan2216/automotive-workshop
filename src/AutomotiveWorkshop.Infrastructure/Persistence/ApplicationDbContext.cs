@@ -97,6 +97,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
             e.HasKey(x => x.Id);
             e.Ignore(x => x.LineTotal);
             e.HasOne(x => x.WorkOrder).WithMany(x => x.Items).HasForeignKey(x => x.WorkOrderId);
+            e.HasOne(x => x.Part).WithMany().HasForeignKey(x => x.PartId).IsRequired(false);
         });
 
         builder.Entity<Invoice>(e =>

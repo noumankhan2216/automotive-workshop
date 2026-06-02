@@ -7,7 +7,8 @@ public record DashboardSummaryDto(
     int OpenWorkOrders,
     int CompletedWorkOrdersThisMonth,
     int OutstandingInvoices,
-    decimal OutstandingAmount);
+    decimal OutstandingAmount,
+    int LowStockParts);
 
 public record RevenueChartPointDto(string Label, decimal Amount);
 

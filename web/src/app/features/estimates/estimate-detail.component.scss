@@ -154,6 +154,13 @@
 .wo-ops__meta { font-size: 0.85rem; color: var(--aw-text-muted); margin: var(--sp-2) 0 0; }
 .wo-time-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
 .wo-time-table th, .wo-time-table td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid var(--aw-border); }
+.wo-part-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--aw-text-muted);
+  margin-top: 2px;
+}
 
 @media (max-width: 720px) {
   .ed-doc { padding: 1.75rem 1.25rem 1.5rem; }

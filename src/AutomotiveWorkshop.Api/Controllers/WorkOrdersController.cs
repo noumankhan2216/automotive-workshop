@@ -51,6 +51,14 @@ public class WorkOrdersController : ControllerBase
         return workOrder is null ? NotFound() : Ok(workOrder);
     }
 
+    [HttpPost("{id:guid}/issue-parts")]
+    [Authorize(Roles = Roles.Shop)]
+    public async Task<IActionResult> IssueParts(Guid id, CancellationToken ct)
+    {
+        var result = await _workOrderService.IssuePartsAsync(id, ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpGet("{id:guid}/pdf")]
     public async Task<IActionResult> Pdf(Guid id, CancellationToken ct)
     {

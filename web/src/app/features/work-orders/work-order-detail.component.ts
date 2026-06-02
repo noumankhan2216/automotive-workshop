@@ -61,6 +61,11 @@ export class WorkOrderDetailComponent implements OnInit {
     return s === 'Completed' || s === 'Invoiced';
   });
 
+  readonly hasPartLines = computed(() => {
+    const o = this.order();
+    return o ? o.items.some(i => i.partId && !i.partsIssued) : false;
+  });
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.fetch(id);
@@ -76,7 +81,8 @@ export class WorkOrderDetailComponent implements OnInit {
         const normalized = {
           ...o,
           status: normalizeWorkOrderStatus(o.status),
-          timeEntries: o.timeEntries ?? []
+          timeEntries: o.timeEntries ?? [],
+          items: (o.items ?? []).map(i => ({ ...i, partsIssued: i.partsIssued ?? false }))
         };
         this.order.set(normalized);
         this.selectedTechId = o.assignedToUserId ?? null;
@@ -168,6 +174,24 @@ export class WorkOrderDetailComponent implements OnInit {
       error: () => {
         this.working.set(false);
         this.snack.open('Could not clock out', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  issueParts(): void {
+    const o = this.order();
+    if (!o || this.working()) return;
+    this.working.set(true);
+    this.api.issueWorkOrderParts(o.id).subscribe({
+      next: result => {
+        this.working.set(false);
+        const msg = result.messages.join(' · ') || 'Parts issued';
+        this.snack.open(msg, 'Dismiss', { duration: 4500 });
+        this.fetch(o.id);
+      },
+      error: err => {
+        this.working.set(false);
+        this.snack.open(err?.error?.message ?? 'Could not issue parts', 'Dismiss', { duration: 3500 });
       }
     });
   }

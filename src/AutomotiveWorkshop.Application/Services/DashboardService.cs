@@ -43,10 +43,14 @@ public class DashboardService : IDashboardService
             .Where(i => !i.IsDeleted && (i.Status == InvoiceStatus.Sent || i.Status == InvoiceStatus.Overdue))
             .ToListAsync(ct);
 
+        var lowStockParts = await _db.Set<Part>().AsNoTracking()
+            .CountAsync(p => !p.IsDeleted && p.IsActive && p.QuantityOnHand <= p.ReorderLevel, ct);
+
         return new DashboardSummaryDto(
             revenueToday, revenueWeek, revenueMonth,
             openWorkOrders, completedThisMonth,
-            outstanding.Count, outstanding.Sum(i => i.Total));
+            outstanding.Count, outstanding.Sum(i => i.Total),
+            lowStockParts);
     }
 
     public async Task<IReadOnlyList<RevenueChartPointDto>> GetRevenueChartAsync(int days, CancellationToken ct)

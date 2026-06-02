@@ -105,10 +105,11 @@ technicians may update work-order status).
 
 ### M0b — Core operational layer
 
-- **Scheduler**: day / week / month views; drag unscheduled jobs onto the calendar; assign bays & technicians
-- **Parts & inventory**: SKU, cost/retail, on-hand qty, reorder alerts, stock adjustments
+- **Scheduler**: day / week / month views; drag jobs with **30-minute** time snapping; move between days
+- **Parts & inventory**: SKU, cost/retail, on-hand qty, reorder alerts, stock adjustments; **link parts to work-order lines** and issue stock from the job
 - **Time tracking**: clock in/out per work order; logged hours on work order detail
 - **Reporting**: sales, tax, and technician productivity for a date range
+- **Dashboard**: clickable KPIs → open work orders, invoices, low-stock parts
 
 Demo technicians: `tech1@workshop.local` / `tech2@workshop.local` (password `Tech123!`).
 

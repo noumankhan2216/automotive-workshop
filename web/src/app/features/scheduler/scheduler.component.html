@@ -30,7 +30,7 @@
         cdkDropList
         id="unscheduled"
         [cdkDropListData]="unscheduled()"
-        [cdkDropListConnectedTo]="dayDropIds()"
+        [cdkDropListConnectedTo]="allDropListIds()"
         cdkDropListSortingDisabled>
         @for (wo of unscheduled(); track wo.id) {
           <div class="queue-card" cdkDrag [cdkDragData]="wo">
@@ -73,7 +73,7 @@
                 cdkDropList
                 [id]="'day-' + di"
                 [cdkDropListData]="eventsForDay(day)"
-                [cdkDropListConnectedTo]="['unscheduled']"
+                [cdkDropListConnectedTo]="allDropListIds()"
                 (cdkDropListDropped)="onCalendarDrop(day, $any($event))">
                 @for (h of hourSlots; track h) {
                   <div class="hour-slot" [style.height.px]="slotPx"></div>

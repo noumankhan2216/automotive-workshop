@@ -28,14 +28,25 @@
     <h2 class="kpi-section__title">Operations</h2>
     <div class="kpi-grid">
       @for (card of opsCards(); track card.label) {
-        <div class="kpi" [class]="card.tone">
-          <div class="kpi__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
-          <div class="kpi__body">
-            <span class="kpi__label">{{ card.label }}</span>
-            <span class="kpi__value">{{ card.value }}</span>
-            @if (card.hint) { <span class="kpi__hint">{{ card.hint }}</span> }
+        @if (card.route) {
+          <a class="kpi kpi--link" [class]="card.tone" [routerLink]="card.route" [queryParams]="card.queryParams">
+            <div class="kpi__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+            <div class="kpi__body">
+              <span class="kpi__label">{{ card.label }}</span>
+              <span class="kpi__value">{{ card.value }}</span>
+              @if (card.hint) { <span class="kpi__hint">{{ card.hint }} →</span> }
+            </div>
+          </a>
+        } @else {
+          <div class="kpi" [class]="card.tone">
+            <div class="kpi__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+            <div class="kpi__body">
+              <span class="kpi__label">{{ card.label }}</span>
+              <span class="kpi__value">{{ card.value }}</span>
+              @if (card.hint) { <span class="kpi__hint">{{ card.hint }}</span> }
+            </div>
           </div>
-        </div>
+        }
       }
     </div>
   </section>

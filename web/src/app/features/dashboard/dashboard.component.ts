@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/services/api.service';
@@ -11,12 +12,14 @@ interface Kpi {
   hint?: string;
   icon: string;
   tone: string;
+  route?: string;
+  queryParams?: Record<string, string>;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatProgressSpinnerModule, MatIconModule],
+  imports: [RouterLink, MatProgressSpinnerModule, MatIconModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -45,14 +48,38 @@ export class DashboardComponent implements OnInit {
     const s = this.summary();
     if (!s) return [];
     return [
-      { label: 'Open Work Orders', value: `${s.openWorkOrders}`, hint: 'Currently active', icon: 'build', tone: 'tone-amber' },
-      { label: 'Completed This Month', value: `${s.completedWorkOrdersThisMonth}`, hint: 'Jobs finished', icon: 'task_alt', tone: 'tone-teal' },
+      {
+        label: 'Open Work Orders',
+        value: `${s.openWorkOrders}`,
+        hint: 'View active jobs',
+        icon: 'build',
+        tone: 'tone-amber',
+        route: '/work-orders'
+      },
+      {
+        label: 'Completed This Month',
+        value: `${s.completedWorkOrdersThisMonth}`,
+        hint: 'Jobs finished',
+        icon: 'task_alt',
+        tone: 'tone-teal',
+        route: '/work-orders'
+      },
       {
         label: 'Outstanding Invoices',
         value: `${s.outstandingInvoices}`,
         hint: `${this.money(s.outstandingAmount)} unpaid`,
         icon: 'receipt_long',
-        tone: 'tone-red'
+        tone: 'tone-red',
+        route: '/invoices'
+      },
+      {
+        label: 'Low Stock Parts',
+        value: `${s.lowStockParts}`,
+        hint: s.lowStockParts > 0 ? 'Needs reorder' : 'Stock levels OK',
+        icon: 'inventory_2',
+        tone: s.lowStockParts > 0 ? 'tone-red' : 'tone-teal',
+        route: '/parts',
+        queryParams: s.lowStockParts > 0 ? { lowStock: '1' } : undefined
       }
     ];
   });

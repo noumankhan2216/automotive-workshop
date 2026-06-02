@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgStyle } from '@angular/common';
+import { DatePipe, NgStyle } from '@angular/common';
 import { Router } from '@angular/router';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,7 +22,6 @@ const SLOT_PX = 48;
   selector: 'app-scheduler',
   standalone: true,
   imports: [
-    CurrencyPipe,
     DatePipe,
     NgStyle,
     DragDropModule,
@@ -64,6 +63,10 @@ export class SchedulerComponent implements OnInit {
 
   dayDropIds(): string[] {
     return this.days().map((_, i) => `day-${i}`);
+  }
+
+  allDropListIds(): string[] {
+    return ['unscheduled', ...this.dayDropIds()];
   }
 
   readonly days = computed(() => {
@@ -157,18 +160,11 @@ export class SchedulerComponent implements OnInit {
   }
 
   onCalendarDrop(day: Date, event: CdkDragDrop<ScheduleEvent[] | WorkOrder[]>): void {
-    if (event.previousContainer === event.container && event.previousIndex === event.currentIndex) return;
-
-    const wo =
-      event.item.data as WorkOrder | ScheduleEvent | undefined;
+    const wo = event.item.data as WorkOrder | ScheduleEvent | undefined;
     if (!wo) return;
 
     const workOrderId = 'workOrderId' in wo ? wo.workOrderId : wo.id;
-    const hour = 9;
-    const start = new Date(day);
-    start.setHours(hour, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(start.getHours() + 2);
+    const { start, end } = this.scheduleFromDrop(day, event, wo);
 
     this.api
       .updateWorkOrderSchedule(workOrderId, {
@@ -187,6 +183,30 @@ export class SchedulerComponent implements OnInit {
 
   openJob(id: string): void {
     this.router.navigate(['/work-orders', id]);
+  }
+
+  /** Snap drop position to 30-minute increments on the day column. */
+  private scheduleFromDrop(
+    day: Date,
+    event: CdkDragDrop<ScheduleEvent[] | WorkOrder[]>,
+    wo: WorkOrder | ScheduleEvent
+  ): { start: Date; end: Date } {
+    const y = event.dropPoint?.y ?? SLOT_PX * 2;
+    const minutesFromGridStart = (y / SLOT_PX) * 60;
+    const snapped = Math.round(minutesFromGridStart / 30) * 30;
+    const totalMinutes = HOUR_START * 60 + Math.max(0, Math.min(snapped, (HOUR_END - HOUR_START) * 60 - 30));
+
+    const start = new Date(day);
+    start.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0);
+
+    let durationMs = 2 * 3_600_000;
+    if ('scheduledStartAt' in wo && wo.scheduledStartAt && wo.scheduledEndAt) {
+      durationMs = new Date(wo.scheduledEndAt).getTime() - new Date(wo.scheduledStartAt).getTime();
+      if (durationMs < 30 * 60_000) durationMs = 2 * 3_600_000;
+    }
+
+    const end = new Date(start.getTime() + durationMs);
+    return { start, end };
   }
 
   private rangeBounds(): { from: string; to: string } {

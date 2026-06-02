@@ -70,6 +70,10 @@ export interface WorkOrder {
 export interface WorkOrderItem {
   id: string;
   serviceCatalogItemId?: string;
+  partId?: string;
+  partSku?: string;
+  partName?: string;
+  partsIssued: boolean;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -206,6 +210,7 @@ export interface DashboardSummary {
   completedWorkOrdersThisMonth: number;
   outstandingInvoices: number;
   outstandingAmount: number;
+  lowStockParts: number;
 }
 
 export type WorkOrderStatus =
@@ -265,7 +270,12 @@ export interface LineItemInput {
   unitPrice: number;
 }
 
-export type WorkOrderItemInput = LineItemInput;
+export type WorkOrderItemInput = LineItemInput & { partId?: string };
+
+export interface IssuePartsResult {
+  linesIssued: number;
+  messages: string[];
+}
 
 export interface CreateWorkOrderRequest {
   customerId: string;

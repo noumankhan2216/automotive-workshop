@@ -35,6 +35,12 @@
         </button>
       }
 
+      @if (hasPartLines()) {
+        <button mat-stroked-button (click)="issueParts()" [disabled]="working()">
+          <mat-icon>inventory_2</mat-icon> Issue Parts
+        </button>
+      }
+
       <button mat-stroked-button (click)="downloadPdf()">
         <mat-icon>picture_as_pdf</mat-icon> PDF
       </button>
@@ -151,7 +157,12 @@
         @for (line of wo.items; track line.id; let i = $index) {
           <tr>
             <td class="c-num">{{ i + 1 }}</td>
-            <td class="desc">{{ line.description }}</td>
+            <td class="desc">
+              {{ line.description }}
+              @if (line.partSku) {
+                <span class="wo-part-tag">{{ line.partSku }}@if (line.partsIssued) { ✓ issued }</span>
+              }
+            </td>
             <td class="r">{{ line.quantity | number:'1.0-2' }}</td>
             <td class="r">{{ line.unitPrice | number:'1.2-2' }}</td>
             <td class="r">{{ line.lineTotal | number:'1.2-2' }}</td>

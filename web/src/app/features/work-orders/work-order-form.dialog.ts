@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/services/api.service';
-import { CreateWorkOrderRequest, Customer, ServiceCatalogItem, Vehicle } from '../../core/models/api.models';
+import { CreateWorkOrderRequest, Customer, Part, ServiceCatalogItem, Vehicle } from '../../core/models/api.models';
 
 @Component({
   selector: 'app-work-order-form-dialog',
@@ -71,6 +71,15 @@ import { CreateWorkOrderRequest, Customer, ServiceCatalogItem, Vehicle } from '.
                   }
                 </mat-select>
               </mat-form-field>
+              <mat-form-field appearance="outline" class="li-cat">
+                <mat-label>Part (inventory)</mat-label>
+                <mat-select formControlName="partId" (selectionChange)="applyPart($index, $event.value)">
+                  <mat-option [value]="null">None</mat-option>
+                  @for (p of parts(); track p.id) {
+                    <mat-option [value]="p.id">{{ p.sku }} — {{ p.name }} ({{ p.quantityOnHand }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
               <mat-form-field appearance="outline" class="li-desc">
                 <mat-label>Description</mat-label>
                 <input matInput formControlName="description" required />
@@ -120,7 +129,7 @@ import { CreateWorkOrderRequest, Customer, ServiceCatalogItem, Vehicle } from '.
       display: flex; align-items: center; justify-content: space-between;
       font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;
     }
-    .line-item { display: grid; grid-template-columns: 150px 1fr 80px 110px 40px; gap: 0.6rem; align-items: center; }
+    .line-item { display: grid; grid-template-columns: 130px 130px 1fr 72px 100px 40px; gap: 0.6rem; align-items: center; }
     .li-cat, .li-desc, .li-num { width: 100%; }
     .li-remove { margin-bottom: 1.2rem; }
     .total-row {
@@ -143,6 +152,7 @@ export class WorkOrderFormDialog implements OnInit {
   readonly customers = signal<Customer[]>([]);
   readonly vehicles = signal<Vehicle[]>([]);
   readonly catalog = signal<ServiceCatalogItem[]>([]);
+  readonly parts = signal<Part[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     customerId: ['', Validators.required],
@@ -176,6 +186,7 @@ export class WorkOrderFormDialog implements OnInit {
   private createItem() {
     return this.fb.nonNullable.group({
       serviceCatalogItemId: <string | null>null,
+      partId: <string | null>null,
       description: ['', Validators.required],
       quantity: [1, [Validators.required, Validators.min(0.01)]],
       unitPrice: [0, [Validators.required, Validators.min(0)]]
@@ -197,10 +208,22 @@ export class WorkOrderFormDialog implements OnInit {
     this.items.at(index).patchValue({ description: item.name, unitPrice: item.defaultPrice });
   }
 
+  applyPart(index: number, partId: string | null): void {
+    if (!partId) return;
+    const part = this.parts().find(p => p.id === partId);
+    if (!part) return;
+    this.items.at(index).patchValue({
+      description: part.name,
+      unitPrice: part.unitPrice,
+      quantity: 1
+    });
+  }
+
   ngOnInit(): void {
     this.api.getCustomers(undefined, 1, 200).subscribe(res => this.customers.set(res.items));
     this.api.getVehicles(undefined, 1, 500).subscribe(res => this.vehicles.set(res.items));
     this.api.getServiceCatalog().subscribe(items => this.catalog.set(items));
+    this.api.getParts(undefined, false, 1, 200).subscribe(res => this.parts.set(res.items.filter(p => p.isActive)));
 
     this.form.controls.customerId.valueChanges.subscribe(() =>
       this.form.controls.vehicleId.setValue('')
@@ -216,6 +239,7 @@ export class WorkOrderFormDialog implements OnInit {
       customerNotes: v.customerNotes?.trim() || undefined,
       items: v.items.map(i => ({
         serviceCatalogItemId: i.serviceCatalogItemId ?? undefined,
+        partId: i.partId ?? undefined,
         description: i.description.trim(),
         quantity: Number(i.quantity),
         unitPrice: Number(i.unitPrice)
