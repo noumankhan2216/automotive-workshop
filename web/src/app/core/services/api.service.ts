@@ -20,6 +20,19 @@ import {
   UpdateEstimateRequest,
   UpdateVehicleRequest,
   Vehicle,
+  AdjustPartStockRequest,
+  AssignWorkOrderRequest,
+  CreatePartRequest,
+  Part,
+  PartDetail,
+  SalesReport,
+  ScheduleEvent,
+  TaxReport,
+  TechnicianProductivityReport,
+  TechnicianUser,
+  TimeEntry,
+  UpdatePartRequest,
+  UpdateWorkOrderScheduleRequest,
   WorkOrder,
   WorkOrderDetail,
   WorkOrderStatus
@@ -151,5 +164,79 @@ export class ApiService {
 
   invoicePdf(id: string) {
     return this.http.get(`${this.baseUrl}/invoices/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  getTechnicians() {
+    return this.http.get<TechnicianUser[]>(`${this.baseUrl}/users/technicians`);
+  }
+
+  getScheduleEvents(from: string, to: string) {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<ScheduleEvent[]>(`${this.baseUrl}/schedule`, { params });
+  }
+
+  updateWorkOrderSchedule(workOrderId: string, body: UpdateWorkOrderScheduleRequest) {
+    return this.http.patch<ScheduleEvent>(`${this.baseUrl}/schedule/work-orders/${workOrderId}`, body);
+  }
+
+  assignWorkOrder(workOrderId: string, body: AssignWorkOrderRequest) {
+    return this.http.patch<ScheduleEvent>(`${this.baseUrl}/schedule/work-orders/${workOrderId}/assignment`, body);
+  }
+
+  getTimeEntries(workOrderId: string) {
+    return this.http.get<TimeEntry[]>(`${this.baseUrl}/work-orders/${workOrderId}/time-entries`);
+  }
+
+  clockIn(workOrderId: string, body: { userId?: string; notes?: string } = {}) {
+    return this.http.post<TimeEntry>(`${this.baseUrl}/work-orders/${workOrderId}/time-entries/clock-in`, body);
+  }
+
+  clockOut(timeEntryId: string, body: { notes?: string } = {}) {
+    return this.http.patch<TimeEntry>(`${this.baseUrl}/time-entries/${timeEntryId}/clock-out`, body);
+  }
+
+  getParts(search?: string, lowStockOnly?: boolean, page = 1, pageSize = 50) {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    if (lowStockOnly) params = params.set('lowStockOnly', true);
+    return this.http.get<PagedResult<Part>>(`${this.baseUrl}/parts`, { params });
+  }
+
+  getPart(id: string) {
+    return this.http.get<PartDetail>(`${this.baseUrl}/parts/${id}`);
+  }
+
+  createPart(body: CreatePartRequest) {
+    return this.http.post<PartDetail>(`${this.baseUrl}/parts`, body);
+  }
+
+  updatePart(id: string, body: UpdatePartRequest) {
+    return this.http.put<PartDetail>(`${this.baseUrl}/parts/${id}`, body);
+  }
+
+  adjustPartStock(id: string, body: AdjustPartStockRequest) {
+    return this.http.post<PartDetail>(`${this.baseUrl}/parts/${id}/adjust-stock`, body);
+  }
+
+  deletePart(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}/parts/${id}`);
+  }
+
+  getSalesReport(from: string, to: string) {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<SalesReport>(`${this.baseUrl}/reports/sales`, { params });
+  }
+
+  getTaxReport(from: string, to: string) {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<TaxReport>(`${this.baseUrl}/reports/tax`, { params });
+  }
+
+  getTechnicianProductivityReport(from: string, to: string) {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<TechnicianProductivityReport>(
+      `${this.baseUrl}/reports/technician-productivity`,
+      { params }
+    );
   }
 }

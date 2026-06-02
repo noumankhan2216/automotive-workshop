@@ -41,9 +41,12 @@ export class ShellComponent {
 
   readonly navItems = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
+    { label: 'Scheduler', route: '/scheduler', icon: 'calendar_month' },
     { label: 'Estimates', route: '/estimates', icon: 'request_quote' },
     { label: 'Work Orders', route: '/work-orders', icon: 'build' },
     { label: 'Invoices', route: '/invoices', icon: 'receipt_long' },
+    { label: 'Parts', route: '/parts', icon: 'inventory_2' },
+    { label: 'Reports', route: '/reports', icon: 'assessment' },
     { label: 'Customers', route: '/customers', icon: 'people' },
     { label: 'Vehicles', route: '/vehicles', icon: 'directions_car' }
   ];

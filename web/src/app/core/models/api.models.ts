@@ -58,6 +58,10 @@ export interface WorkOrder {
   vehicleDescription: string;
   status: WorkOrderStatus;
   assignedToUserId?: string;
+  assignedToUserName?: string;
+  scheduledStartAt?: string;
+  scheduledEndAt?: string;
+  bayLabel?: string;
   openedAt: string;
   completedAt?: string;
   totalAmount: number;
@@ -82,11 +86,17 @@ export interface WorkOrderDetail {
   estimateId?: string;
   status: WorkOrderStatus;
   assignedToUserId?: string;
+  assignedToUserName?: string;
+  scheduledStartAt?: string;
+  scheduledEndAt?: string;
+  bayLabel?: string;
   customerNotes?: string;
   internalNotes?: string;
   openedAt: string;
   completedAt?: string;
   items: WorkOrderItem[];
+  timeEntries: TimeEntry[];
+  totalLoggedHours: number;
   totalAmount: number;
 }
 
@@ -279,4 +289,129 @@ export interface UpdateEstimateRequest {
   internalNotes?: string;
   validUntil?: string;
   items: LineItemInput[];
+}
+
+export interface TechnicianUser {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  workOrderId: string;
+  userId: string;
+  userName: string;
+  startedAt: string;
+  endedAt?: string;
+  hours?: number;
+  notes?: string;
+  isActive: boolean;
+}
+
+export interface ScheduleEvent {
+  workOrderId: string;
+  workOrderNumber: string;
+  customerName: string;
+  vehicleDescription: string;
+  status: WorkOrderStatus;
+  assignedToUserId?: string;
+  assignedToUserName?: string;
+  bayLabel?: string;
+  scheduledStartAt: string;
+  scheduledEndAt: string;
+  totalAmount: number;
+}
+
+export interface UpdateWorkOrderScheduleRequest {
+  scheduledStartAt: string;
+  scheduledEndAt: string;
+  bayLabel?: string;
+  assignedToUserId?: string;
+}
+
+export interface AssignWorkOrderRequest {
+  assignedToUserId?: string;
+}
+
+export type PartStockTransactionType = 'Receive' | 'Issue' | 'Adjustment' | 'Return';
+
+export interface Part {
+  id: string;
+  sku: string;
+  name: string;
+  description?: string;
+  category?: string;
+  unitCost: number;
+  unitPrice: number;
+  quantityOnHand: number;
+  reorderLevel: number;
+  isActive: boolean;
+  isLowStock: boolean;
+}
+
+export interface PartDetail extends Part {
+  description?: string;
+}
+
+export interface CreatePartRequest {
+  sku: string;
+  name: string;
+  description?: string;
+  category?: string;
+  unitCost: number;
+  unitPrice: number;
+  quantityOnHand: number;
+  reorderLevel: number;
+}
+
+export interface UpdatePartRequest {
+  sku: string;
+  name: string;
+  description?: string;
+  category?: string;
+  unitCost: number;
+  unitPrice: number;
+  reorderLevel: number;
+  isActive: boolean;
+}
+
+export interface AdjustPartStockRequest {
+  quantityChange: number;
+  type: PartStockTransactionType;
+  workOrderId?: string;
+  notes?: string;
+}
+
+export interface SalesReport {
+  from: string;
+  to: string;
+  grossSales: number;
+  taxCollected: number;
+  netSales: number;
+  invoiceCount: number;
+  paidInvoiceCount: number;
+  rows: { date: string; invoiceCount: number; subTotal: number; taxAmount: number; total: number }[];
+}
+
+export interface TaxReport {
+  from: string;
+  to: string;
+  taxableSales: number;
+  taxCollected: number;
+  effectiveTaxRate: number;
+  rows: { date: string; taxableAmount: number; taxAmount: number }[];
+}
+
+export interface TechnicianProductivityReport {
+  from: string;
+  to: string;
+  technicians: {
+    userId: string;
+    userName: string;
+    totalHours: number;
+    jobsAssigned: number;
+    jobsCompleted: number;
+    openTimeEntries: number;
+  }[];
 }

@@ -21,6 +21,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<ServiceCatalogItem> ServiceCatalogItems => Set<ServiceCatalogItem>();
     public DbSet<WorkshopSettings> WorkshopSettings => Set<WorkshopSettings>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+    public DbSet<Part> Parts => Set<Part>();
+    public DbSet<PartStockTransaction> PartStockTransactions => Set<PartStockTransaction>();
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -60,10 +63,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.WorkOrderNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.BayLabel).HasMaxLength(50);
             e.HasOne(x => x.Customer).WithMany(x => x.WorkOrders).HasForeignKey(x => x.CustomerId);
             e.HasOne(x => x.Vehicle).WithMany(x => x.WorkOrders).HasForeignKey(x => x.VehicleId);
             e.HasOne(x => x.Invoice).WithOne(x => x.WorkOrder).HasForeignKey<Invoice>(x => x.WorkOrderId);
             e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        builder.Entity<TimeEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.WorkOrder).WithMany(x => x.TimeEntries).HasForeignKey(x => x.WorkOrderId);
+        });
+
+        builder.Entity<Part>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Sku).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(x => x.Sku).IsUnique();
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        builder.Entity<PartStockTransaction>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Part).WithMany(x => x.StockTransactions).HasForeignKey(x => x.PartId);
+            e.HasOne(x => x.WorkOrder).WithMany().HasForeignKey(x => x.WorkOrderId).IsRequired(false);
         });
 
         builder.Entity<WorkOrderItem>(e =>

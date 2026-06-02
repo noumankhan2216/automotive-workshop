@@ -80,7 +80,18 @@ App runs at `http://localhost:4200`.
 | POST | `/api/v1/estimates/{id}/convert` | Convert approved estimate → work order |
 | GET | `/api/v1/estimates/{id}/pdf` | Estimate PDF |
 | GET | `/api/v1/work-orders` | List work orders |
+| GET | `/api/v1/work-orders/{id}` | Work order detail (schedule, time entries) |
 | GET | `/api/v1/work-orders/{id}/pdf` | Work order PDF |
+| GET/POST | `/api/v1/work-orders/{id}/time-entries/clock-in` | Technician time tracking |
+| PATCH | `/api/v1/time-entries/{id}/clock-out` | Close time entry |
+| GET | `/api/v1/schedule` | Calendar events (`from`, `to`) |
+| PATCH | `/api/v1/schedule/work-orders/{id}` | Reschedule / assign bay |
+| GET/POST/PUT/DELETE | `/api/v1/parts` | Parts inventory CRUD |
+| POST | `/api/v1/parts/{id}/adjust-stock` | Stock receive/issue/adjust |
+| GET | `/api/v1/reports/sales` | Sales report |
+| GET | `/api/v1/reports/tax` | Tax report |
+| GET | `/api/v1/reports/technician-productivity` | Tech hours & jobs |
+| GET | `/api/v1/users/technicians` | Technicians for assignment |
 | GET | `/api/v1/invoices` | List invoices |
 | GET | `/api/v1/invoices/{id}/pdf` | Invoice PDF |
 | GET | `/api/v1/dashboard/summary` | Dashboard KPIs |
@@ -91,6 +102,15 @@ App runs at `http://localhost:4200`.
 `Estimate → (approve) → Work Order → (complete) → Invoice`, each printable as a
 PDF. Write endpoints are role-gated (`Admin`, `Manager`, `Receptionist`;
 technicians may update work-order status).
+
+### M0b — Core operational layer
+
+- **Scheduler**: day / week / month views; drag unscheduled jobs onto the calendar; assign bays & technicians
+- **Parts & inventory**: SKU, cost/retail, on-hand qty, reorder alerts, stock adjustments
+- **Time tracking**: clock in/out per work order; logged hours on work order detail
+- **Reporting**: sales, tax, and technician productivity for a date range
+
+Demo technicians: `tech1@workshop.local` / `tech2@workshop.local` (password `Tech123!`).
 
 OpenAPI spec available at `/openapi/v1.json` in Development.
 
@@ -121,6 +141,10 @@ docker compose up --build
 - [x] **Inline editing** of customers & vehicles
 - [x] **Role-based authorization** enforced on write endpoints
 - [x] **SMTP email** sending (configurable; logs when `Email:SmtpHost` is empty)
+- [x] **Scheduler** with day/week/month views and drag-to-schedule
+- [x] **Parts inventory** with stock tracking and low-stock filter
+- [x] **Technician time tracking** on work orders
+- [x] **Business reports** (sales, tax, technician productivity)
 
 ## Configuration
 

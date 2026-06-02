@@ -1,3 +1,4 @@
+using AutomotiveWorkshop.Application.DTOs.TimeTracking;
 using AutomotiveWorkshop.Domain.Enums;
 
 namespace AutomotiveWorkshop.Application.DTOs.WorkOrders;
@@ -11,6 +12,10 @@ public record WorkOrderDto(
     string VehicleDescription,
     WorkOrderStatus Status,
     string? AssignedToUserId,
+    string? AssignedToUserName,
+    DateTime? ScheduledStartAt,
+    DateTime? ScheduledEndAt,
+    string? BayLabel,
     DateTime OpenedAt,
     DateTime? CompletedAt,
     decimal TotalAmount);
@@ -25,11 +30,17 @@ public record WorkOrderDetailDto(
     Guid? EstimateId,
     WorkOrderStatus Status,
     string? AssignedToUserId,
+    string? AssignedToUserName,
+    DateTime? ScheduledStartAt,
+    DateTime? ScheduledEndAt,
+    string? BayLabel,
     string? CustomerNotes,
     string? InternalNotes,
     DateTime OpenedAt,
     DateTime? CompletedAt,
     IReadOnlyList<WorkOrderItemDto> Items,
+    IReadOnlyList<TimeEntryDto> TimeEntries,
+    decimal TotalLoggedHours,
     decimal TotalAmount);
 
 public record WorkOrderItemDto(

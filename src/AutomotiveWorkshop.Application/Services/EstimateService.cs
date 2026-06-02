@@ -23,17 +23,20 @@ public interface IEstimateService
 public class EstimateService : IEstimateService
 {
     private readonly DbContext _db;
+    private readonly IWorkOrderService _workOrders;
     private readonly IValidator<CreateEstimateRequest> _createValidator;
     private readonly IValidator<UpdateEstimateRequest> _updateValidator;
     private readonly INotificationService _notificationService;
 
     public EstimateService(
         DbContext db,
+        IWorkOrderService workOrders,
         IValidator<CreateEstimateRequest> createValidator,
         IValidator<UpdateEstimateRequest> updateValidator,
         INotificationService notificationService)
     {
         _db = db;
+        _workOrders = workOrders;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _notificationService = notificationService;
@@ -181,7 +184,7 @@ public class EstimateService : IEstimateService
         if (estimate is null) return null;
 
         if (estimate.Status == EstimateStatus.Converted && estimate.ConvertedWorkOrderId.HasValue)
-            return await LoadWorkOrderDetail(estimate.ConvertedWorkOrderId.Value, ct);
+            return await _workOrders.GetByIdAsync(estimate.ConvertedWorkOrderId.Value, ct);
 
         if (estimate.Status != EstimateStatus.Approved)
             throw new InvalidOperationException("Only an approved estimate can be converted to a work order.");
@@ -212,7 +215,7 @@ public class EstimateService : IEstimateService
         _db.Set<WorkOrder>().Add(workOrder);
         await _db.SaveChangesAsync(ct);
 
-        return await LoadWorkOrderDetail(workOrder.Id, ct);
+        return await _workOrders.GetByIdAsync(workOrder.Id, ct);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
@@ -227,28 +230,6 @@ public class EstimateService : IEstimateService
         estimate.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
         return true;
-    }
-
-    private async Task<WorkOrderDetailDto?> LoadWorkOrderDetail(Guid workOrderId, CancellationToken ct)
-    {
-        var w = await _db.Set<WorkOrder>()
-            .AsNoTracking()
-            .Include(x => x.Customer)
-            .Include(x => x.Vehicle)
-            .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == workOrderId, ct);
-
-        if (w is null) return null;
-
-        return new WorkOrderDetailDto(
-            w.Id, w.WorkOrderNumber, w.CustomerId, w.Customer.Name, w.VehicleId,
-            $"{w.Vehicle.Year} {w.Vehicle.Make} {w.Vehicle.Model}",
-            w.EstimateId,
-            w.Status, w.AssignedToUserId, w.CustomerNotes, w.InternalNotes,
-            w.OpenedAt, w.CompletedAt,
-            w.Items.Select(i => new WorkOrderItemDto(
-                i.Id, i.ServiceCatalogItemId, i.Description, i.Quantity, i.UnitPrice, i.LineTotal)).ToList(),
-            w.Items.Sum(i => i.LineTotal));
     }
 
     private static EstimateDto MapToDto(Estimate e) => new(

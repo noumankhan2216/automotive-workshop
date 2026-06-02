@@ -1,0 +1,102 @@
+<div class="page-header">
+  <div>
+    <h1>Scheduler</h1>
+    <p class="page-header__sub">Plan bays, assign technicians, drag jobs on the calendar</p>
+  </div>
+  <div class="sched-nav">
+    <button mat-icon-button (click)="prev()" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
+    <button mat-stroked-button (click)="today()">Today</button>
+    <button mat-icon-button (click)="next()" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
+    <span class="sched-range">{{ rangeLabel() }}</span>
+  </div>
+</div>
+
+<div class="toolbar-row">
+  <mat-button-toggle-group [value]="view()" (change)="setView($any($event).value)">
+    <mat-button-toggle value="day">Day</mat-button-toggle>
+    <mat-button-toggle value="week">Week</mat-button-toggle>
+    <mat-button-toggle value="month">Month</mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+
+@if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="40" /></div>
+} @else {
+  <div class="sched-layout">
+    <aside class="sched-queue">
+      <h2>Unscheduled</h2>
+      <div
+        class="queue-list"
+        cdkDropList
+        id="unscheduled"
+        [cdkDropListData]="unscheduled()"
+        [cdkDropListConnectedTo]="dayDropIds()"
+        cdkDropListSortingDisabled>
+        @for (wo of unscheduled(); track wo.id) {
+          <div class="queue-card" cdkDrag [cdkDragData]="wo">
+            <div class="queue-card__num">{{ wo.workOrderNumber }}</div>
+            <div class="queue-card__sub">{{ wo.customerName }}</div>
+            <div class="queue-card__sub">{{ wo.vehicleDescription }}</div>
+          </div>
+        } @empty {
+          <p class="queue-empty">All open jobs are on the calendar.</p>
+        }
+      </div>
+    </aside>
+
+    <div class="sched-calendar" [class.month-view]="view() === 'month'">
+      @if (view() === 'month') {
+        <div class="month-grid">
+          @for (day of days(); track day.toISOString()) {
+            <div class="month-cell">
+              <div class="month-cell__head">{{ day | date:'d' }}</div>
+              @for (ev of eventsForDay(day); track ev.workOrderId) {
+                <button type="button" class="month-ev" (click)="openJob(ev.workOrderId)">
+                  {{ ev.workOrderNumber }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="week-grid" [style.--day-count]="days().length">
+          <div class="time-gutter">
+            @for (h of hourSlots; track h) {
+              <div class="time-label" [style.height.px]="slotPx">{{ h }}:00</div>
+            }
+          </div>
+          @for (day of days(); track day.toISOString(); let di = $index) {
+            <div class="day-col">
+              <div class="day-col__head">{{ day | date:'EEE d' }}</div>
+              <div
+                class="day-col__body"
+                cdkDropList
+                [id]="'day-' + di"
+                [cdkDropListData]="eventsForDay(day)"
+                [cdkDropListConnectedTo]="['unscheduled']"
+                (cdkDropListDropped)="onCalendarDrop(day, $any($event))">
+                @for (h of hourSlots; track h) {
+                  <div class="hour-slot" [style.height.px]="slotPx"></div>
+                }
+                @for (ev of eventsForDay(day); track ev.workOrderId) {
+                  <button
+                    type="button"
+                    class="sched-event"
+                    cdkDrag
+                    [cdkDragData]="ev"
+                    [ngStyle]="eventStyle(ev, day)"
+                    (click)="openJob(ev.workOrderId)"
+                    [matTooltip]="ev.customerName + ' — ' + ev.vehicleDescription">
+                    <span class="sched-event__num">{{ ev.workOrderNumber }}</span>
+                    <span class="sched-event__sub">{{ ev.assignedToUserName || 'Unassigned' }}</span>
+                    @if (ev.bayLabel) { <span class="sched-event__bay">{{ ev.bayLabel }}</span> }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

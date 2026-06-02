@@ -41,6 +41,62 @@
     </div>
   </div>
 
+  <section class="wo-ops surface">
+    <div class="wo-ops__block">
+      <h2>Shop floor</h2>
+      <div class="wo-ops__row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Technician</mat-label>
+          <mat-select [(ngModel)]="selectedTechId">
+            <mat-option [value]="null">Unassigned</mat-option>
+            @for (t of technicians(); track t.id) {
+              <mat-option [value]="t.id">{{ t.fullName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button (click)="assignTechnician()" [disabled]="working()">Assign</button>
+        <a mat-stroked-button routerLink="/scheduler"><mat-icon>calendar_month</mat-icon> Scheduler</a>
+      </div>
+      @if (wo.scheduledStartAt) {
+        <p class="wo-ops__meta">
+          Scheduled {{ wo.scheduledStartAt | date:'medium' }} – {{ wo.scheduledEndAt | date:'shortTime' }}
+          @if (wo.bayLabel) { · {{ wo.bayLabel }} }
+        </p>
+      } @else {
+        <p class="wo-ops__meta">Not scheduled — drag onto the <a routerLink="/scheduler">calendar</a>.</p>
+      }
+    </div>
+    <div class="wo-ops__block">
+      <div class="wo-ops__head">
+        <h2>Time on job</h2>
+        <span class="wo-ops__hours">{{ wo.totalLoggedHours | number:'1.1-1' }} h logged</span>
+        <button mat-stroked-button (click)="clockIn()" [disabled]="working()"><mat-icon>timer</mat-icon> Clock in</button>
+      </div>
+      @if (wo.timeEntries.length) {
+        <table class="wo-time-table">
+          <thead><tr><th>Technician</th><th>Start</th><th>End</th><th>Hours</th><th></th></tr></thead>
+          <tbody>
+            @for (e of wo.timeEntries; track e.id) {
+              <tr>
+                <td>{{ e.userName }}</td>
+                <td>{{ e.startedAt | date:'short' }}</td>
+                <td>{{ e.endedAt ? (e.endedAt | date:'short') : '—' }}</td>
+                <td>{{ e.hours ?? '—' }}</td>
+                <td>
+                  @if (e.isActive) {
+                    <button mat-button (click)="clockOut(e.id)">Clock out</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="wo-ops__meta">No time logged yet.</p>
+      }
+    </div>
+  </section>
+
   <div class="ed-doc">
     <header class="ed-head">
       <div class="ed-brand">

@@ -1,0 +1,9 @@
+.report-filters { align-items: center; gap: var(--sp-3); }
+.report-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: var(--sp-4) 0;
+}
+.kpi__label { display: block; font-size: 0.75rem; color: var(--aw-text-muted); }
+.kpi__val { font-size: 1.25rem; font-weight: 700; }

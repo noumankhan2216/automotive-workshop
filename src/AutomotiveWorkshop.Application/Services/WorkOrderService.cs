@@ -1,5 +1,7 @@
 using AutomotiveWorkshop.Application.Common;
+using AutomotiveWorkshop.Application.DTOs.TimeTracking;
 using AutomotiveWorkshop.Application.DTOs.WorkOrders;
+using AutomotiveWorkshop.Application.Interfaces;
 using AutomotiveWorkshop.Domain.Entities;
 using AutomotiveWorkshop.Domain.Enums;
 using FluentValidation;
@@ -18,11 +20,16 @@ public interface IWorkOrderService
 public class WorkOrderService : IWorkOrderService
 {
     private readonly DbContext _db;
+    private readonly IUserDirectoryService _users;
     private readonly IValidator<CreateWorkOrderRequest> _createValidator;
 
-    public WorkOrderService(DbContext db, IValidator<CreateWorkOrderRequest> createValidator)
+    public WorkOrderService(
+        DbContext db,
+        IUserDirectoryService users,
+        IValidator<CreateWorkOrderRequest> createValidator)
     {
         _db = db;
+        _users = users;
         _createValidator = createValidator;
     }
 
@@ -44,7 +51,12 @@ public class WorkOrderService : IWorkOrderService
             .Take(pageSize)
             .ToListAsync(ct);
 
-        var items = workOrders.Select(MapToDto).ToList();
+        var items = new List<WorkOrderDto>();
+        foreach (var w in workOrders)
+        {
+            var name = await _users.GetDisplayNameAsync(w.AssignedToUserId, ct);
+            items.Add(MapToDto(w, name));
+        }
 
         return new PagedResult<WorkOrderDto> { Items = items, Page = page, PageSize = pageSize, TotalCount = total };
     }
@@ -56,9 +68,10 @@ public class WorkOrderService : IWorkOrderService
             .Include(w => w.Customer)
             .Include(w => w.Vehicle)
             .Include(w => w.Items)
+            .Include(w => w.TimeEntries)
             .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted, ct);
 
-        return workOrder is null ? null : MapToDetailDto(workOrder);
+        return workOrder is null ? null : await MapToDetailDtoAsync(workOrder, ct);
     }
 
     public async Task<WorkOrderDetailDto> CreateAsync(CreateWorkOrderRequest request, CancellationToken ct)
@@ -95,6 +108,7 @@ public class WorkOrderService : IWorkOrderService
             .Include(w => w.Customer)
             .Include(w => w.Vehicle)
             .Include(w => w.Items)
+            .Include(w => w.TimeEntries)
             .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted, ct);
 
         if (workOrder is null) return null;
@@ -106,22 +120,44 @@ public class WorkOrderService : IWorkOrderService
             workOrder.CompletedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
-        return MapToDetailDto(workOrder);
+        return await MapToDetailDtoAsync(workOrder, ct);
     }
 
-    private static WorkOrderDto MapToDto(WorkOrder w) => new(
+    private static WorkOrderDto MapToDto(WorkOrder w, string? assignedName) => new(
         w.Id, w.WorkOrderNumber, w.CustomerId, w.Customer.Name, w.VehicleId,
         $"{w.Vehicle.Year} {w.Vehicle.Make} {w.Vehicle.Model}",
-        w.Status, w.AssignedToUserId, w.OpenedAt, w.CompletedAt,
+        w.Status, w.AssignedToUserId, assignedName,
+        w.ScheduledStartAt, w.ScheduledEndAt, w.BayLabel,
+        w.OpenedAt, w.CompletedAt,
         w.Items.Sum(i => i.LineTotal));
 
-    private static WorkOrderDetailDto MapToDetailDto(WorkOrder w) => new(
-        w.Id, w.WorkOrderNumber, w.CustomerId, w.Customer.Name, w.VehicleId,
-        $"{w.Vehicle.Year} {w.Vehicle.Make} {w.Vehicle.Model}",
-        w.EstimateId,
-        w.Status, w.AssignedToUserId, w.CustomerNotes, w.InternalNotes,
-        w.OpenedAt, w.CompletedAt,
-        w.Items.Select(i => new WorkOrderItemDto(
-            i.Id, i.ServiceCatalogItemId, i.Description, i.Quantity, i.UnitPrice, i.LineTotal)).ToList(),
-        w.Items.Sum(i => i.LineTotal));
+    private async Task<WorkOrderDetailDto> MapToDetailDtoAsync(WorkOrder w, CancellationToken ct)
+    {
+        var assignedName = await _users.GetDisplayNameAsync(w.AssignedToUserId, ct);
+        var timeDtos = new List<TimeEntryDto>();
+        foreach (var e in w.TimeEntries.OrderByDescending(t => t.StartedAt))
+        {
+            var userName = await _users.GetDisplayNameAsync(e.UserId, ct) ?? "Unknown";
+            timeDtos.Add(new TimeEntryDto(
+                e.Id, e.WorkOrderId, e.UserId, userName, e.StartedAt, e.EndedAt,
+                e.Hours is null ? null : Math.Round(e.Hours.Value, 2),
+                e.Notes, !e.EndedAt.HasValue));
+        }
+
+        var totalHours = timeDtos.Where(t => t.Hours.HasValue).Sum(t => t.Hours!.Value);
+
+        return new WorkOrderDetailDto(
+            w.Id, w.WorkOrderNumber, w.CustomerId, w.Customer.Name, w.VehicleId,
+            $"{w.Vehicle.Year} {w.Vehicle.Make} {w.Vehicle.Model}",
+            w.EstimateId,
+            w.Status, w.AssignedToUserId, assignedName,
+            w.ScheduledStartAt, w.ScheduledEndAt, w.BayLabel,
+            w.CustomerNotes, w.InternalNotes,
+            w.OpenedAt, w.CompletedAt,
+            w.Items.Select(i => new WorkOrderItemDto(
+                i.Id, i.ServiceCatalogItemId, i.Description, i.Quantity, i.UnitPrice, i.LineTotal)).ToList(),
+            timeDtos,
+            Math.Round(totalHours, 2),
+            w.Items.Sum(i => i.LineTotal));
+    }
 }

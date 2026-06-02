@@ -1,14 +1,17 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
-import { WorkOrderDetail, WorkOrderStatus } from '../../core/models/api.models';
+import { TechnicianUser, WorkOrderDetail, WorkOrderStatus } from '../../core/models/api.models';
 import { humanize, normalizeWorkOrderStatus, workOrderBadge, WORK_ORDER_STATUSES } from '../../core/utils/status.util';
 import { openPdfBlob } from '../../core/utils/pdf.util';
 
@@ -19,12 +22,15 @@ import { openPdfBlob } from '../../core/utils/pdf.util';
     CurrencyPipe,
     DatePipe,
     DecimalPipe,
+    FormsModule,
     RouterLink,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatFormFieldModule
   ],
   templateUrl: './work-order-detail.component.html',
   styleUrl: '../estimates/estimate-detail.component.scss'
@@ -38,7 +44,9 @@ export class WorkOrderDetailComponent implements OnInit {
   readonly loading = signal(true);
   readonly working = signal(false);
   readonly order = signal<WorkOrderDetail | null>(null);
+  readonly technicians = signal<TechnicianUser[]>([]);
   readonly statuses = WORK_ORDER_STATUSES;
+  selectedTechId: string | null = null;
 
   readonly badge = workOrderBadge;
   readonly humanize = humanize;
@@ -56,13 +64,22 @@ export class WorkOrderDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.fetch(id);
+    this.api.getTechnicians().subscribe({
+      next: t => this.technicians.set(t)
+    });
   }
 
   private fetch(id: string): void {
     this.loading.set(true);
     this.api.getWorkOrder(id).subscribe({
       next: o => {
-        this.order.set({ ...o, status: normalizeWorkOrderStatus(o.status) });
+        const normalized = {
+          ...o,
+          status: normalizeWorkOrderStatus(o.status),
+          timeEntries: o.timeEntries ?? []
+        };
+        this.order.set(normalized);
+        this.selectedTechId = o.assignedToUserId ?? null;
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -100,6 +117,57 @@ export class WorkOrderDetailComponent implements OnInit {
       error: err => {
         this.working.set(false);
         this.snack.open(err?.error?.message ?? 'Could not create invoice', 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  assignTechnician(): void {
+    const o = this.order();
+    if (!o || this.working()) return;
+    this.working.set(true);
+    this.api.assignWorkOrder(o.id, { assignedToUserId: this.selectedTechId ?? undefined }).subscribe({
+      next: () => {
+        this.working.set(false);
+        this.snack.open('Technician assigned', 'Dismiss', { duration: 2500 });
+        this.fetch(o.id);
+      },
+      error: () => {
+        this.working.set(false);
+        this.snack.open('Could not assign technician', 'Dismiss', { duration: 3000 });
+      }
+    });
+  }
+
+  clockIn(): void {
+    const o = this.order();
+    if (!o || this.working()) return;
+    this.working.set(true);
+    this.api.clockIn(o.id, { userId: this.selectedTechId ?? undefined }).subscribe({
+      next: () => {
+        this.working.set(false);
+        this.snack.open('Clocked in', 'Dismiss', { duration: 2500 });
+        this.fetch(o.id);
+      },
+      error: err => {
+        this.working.set(false);
+        this.snack.open(err?.error?.message ?? 'Could not clock in', 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  clockOut(entryId: string): void {
+    const o = this.order();
+    if (!o || this.working()) return;
+    this.working.set(true);
+    this.api.clockOut(entryId).subscribe({
+      next: () => {
+        this.working.set(false);
+        this.snack.open('Clocked out', 'Dismiss', { duration: 2500 });
+        this.fetch(o.id);
+      },
+      error: () => {
+        this.working.set(false);
+        this.snack.open('Could not clock out', 'Dismiss', { duration: 3000 });
       }
     });
   }

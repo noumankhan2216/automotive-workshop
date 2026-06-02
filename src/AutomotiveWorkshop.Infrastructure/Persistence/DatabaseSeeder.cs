@@ -68,6 +68,135 @@ public static class DatabaseSeeder
 
         await SeedDemoDataAsync(db);
         await SeedDemoEstimatesAsync(db);
+        await SeedM0bOperationsAsync(db, userManager);
+    }
+
+    private static async Task SeedM0bOperationsAsync(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    {
+        await SeedTechniciansAsync(userManager);
+        await SeedDemoPartsAsync(db);
+
+        var now = DateTime.UtcNow;
+        var tech = await userManager.FindByEmailAsync("tech1@workshop.local");
+        var techId = tech?.Id;
+
+        var wo2 = await db.WorkOrders.FirstOrDefaultAsync(w => w.WorkOrderNumber == "WO-DEMO-0002");
+        var wo3 = await db.WorkOrders.FirstOrDefaultAsync(w => w.WorkOrderNumber == "WO-DEMO-0003");
+        var wo5 = await db.WorkOrders.FirstOrDefaultAsync(w => w.WorkOrderNumber == "WO-DEMO-0005");
+        var wo1 = await db.WorkOrders.Include(w => w.TimeEntries).FirstOrDefaultAsync(w => w.WorkOrderNumber == "WO-DEMO-0001");
+        var wo6 = await db.WorkOrders.Include(w => w.TimeEntries).FirstOrDefaultAsync(w => w.WorkOrderNumber == "WO-DEMO-0006");
+
+        if (wo2 is not null && wo2.ScheduledStartAt is null)
+        {
+            wo2.ScheduledStartAt = now.Date.AddHours(9);
+            wo2.ScheduledEndAt = now.Date.AddHours(12);
+            wo2.BayLabel = "Bay 1";
+            if (techId is not null) wo2.AssignedToUserId = techId;
+        }
+
+        if (wo3 is not null && wo3.ScheduledStartAt is null)
+        {
+            wo3.ScheduledStartAt = now.Date.AddHours(13);
+            wo3.ScheduledEndAt = now.Date.AddHours(16);
+            wo3.BayLabel = "Bay 2";
+        }
+
+        if (wo5 is not null && wo5.ScheduledStartAt is null)
+        {
+            wo5.ScheduledStartAt = now.Date.AddDays(1).AddHours(10);
+            wo5.ScheduledEndAt = now.Date.AddDays(1).AddHours(11);
+            wo5.BayLabel = "Bay 1";
+        }
+
+        if (techId is not null && wo1 is not null && !wo1.TimeEntries.Any())
+        {
+            wo1.AssignedToUserId = techId;
+            db.TimeEntries.Add(new TimeEntry
+            {
+                WorkOrderId = wo1.Id,
+                UserId = techId,
+                StartedAt = wo1.OpenedAt.AddHours(1),
+                EndedAt = wo1.CompletedAt ?? wo1.OpenedAt.AddHours(3),
+                Notes = "Routine service"
+            });
+        }
+
+        if (techId is not null && wo6 is not null && !wo6.TimeEntries.Any())
+        {
+            wo6.AssignedToUserId = techId;
+            db.TimeEntries.Add(new TimeEntry
+            {
+                WorkOrderId = wo6.Id,
+                UserId = techId,
+                StartedAt = wo6.OpenedAt.AddHours(2),
+                EndedAt = wo6.CompletedAt,
+                Notes = "Timing belt job"
+            });
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedTechniciansAsync(UserManager<ApplicationUser> userManager)
+    {
+        foreach (var (email, name) in new[]
+                 {
+                     ("tech1@workshop.local", "Alex Rivera"),
+                     ("tech2@workshop.local", "Jordan Kim")
+                 })
+        {
+            if (await userManager.FindByEmailAsync(email) is not null) continue;
+
+            var user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                FullName = name,
+                EmailConfirmed = true
+            };
+
+            if ((await userManager.CreateAsync(user, "Tech123!")).Succeeded)
+                await userManager.AddToRoleAsync(user, "Technician");
+        }
+    }
+
+    private static async Task SeedDemoPartsAsync(ApplicationDbContext db)
+    {
+        if (await db.Parts.AnyAsync(p => p.Sku.StartsWith("PRT-DEMO-"))) return;
+
+        db.Parts.AddRange(
+            new Part
+            {
+                Sku = "PRT-DEMO-OIL-5W30",
+                Name = "5W-30 Synthetic Oil (5 qt)",
+                Category = "Fluids",
+                UnitCost = 18.50m,
+                UnitPrice = 34.99m,
+                QuantityOnHand = 24,
+                ReorderLevel = 8
+            },
+            new Part
+            {
+                Sku = "PRT-DEMO-BRAKE-PAD",
+                Name = "Front Brake Pad Set",
+                Category = "Brakes",
+                UnitCost = 42.00m,
+                UnitPrice = 89.99m,
+                QuantityOnHand = 6,
+                ReorderLevel = 4
+            },
+            new Part
+            {
+                Sku = "PRT-DEMO-FILTER",
+                Name = "Engine Oil Filter",
+                Category = "Filters",
+                UnitCost = 6.25m,
+                UnitPrice = 14.99m,
+                QuantityOnHand = 3,
+                ReorderLevel = 10
+            });
+
+        await db.SaveChangesAsync();
     }
 
     /// <summary>Idempotent estimate seeding that reuses already-seeded demo customers/vehicles,

@@ -1,0 +1,78 @@
+<div class="page-header">
+  <div>
+    <h1>Reports</h1>
+    <p class="page-header__sub">Sales, tax, and technician productivity</p>
+  </div>
+</div>
+
+<div class="toolbar-row report-filters">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>From</mat-label>
+    <input matInput type="date" [(ngModel)]="fromDate" />
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>To</mat-label>
+    <input matInput type="date" [(ngModel)]="toDate" />
+  </mat-form-field>
+  <button mat-flat-button color="primary" (click)="loadAll()" [disabled]="loading()">Run reports</button>
+</div>
+
+@if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="40" /></div>
+} @else {
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Sales">
+      @if (sales(); as s) {
+        <div class="report-kpis">
+          <div class="kpi"><span class="kpi__label">Gross sales</span><span class="kpi__val">{{ s.grossSales | currency }}</span></div>
+          <div class="kpi"><span class="kpi__label">Net (paid)</span><span class="kpi__val">{{ s.netSales | currency }}</span></div>
+          <div class="kpi"><span class="kpi__label">Invoices</span><span class="kpi__val">{{ s.invoiceCount }} <small>({{ s.paidInvoiceCount }} paid)</small></span></div>
+        </div>
+        <div class="surface table-scroll">
+          <table mat-table [dataSource]="s.rows" class="aw-table">
+            <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let r">{{ r.date | date:'mediumDate' }}</td></ng-container>
+            <ng-container matColumnDef="invoiceCount"><th mat-header-cell *matHeaderCellDef>Invoices</th><td mat-cell *matCellDef="let r">{{ r.invoiceCount }}</td></ng-container>
+            <ng-container matColumnDef="subTotal"><th mat-header-cell *matHeaderCellDef>Subtotal</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.subTotal | currency }}</td></ng-container>
+            <ng-container matColumnDef="taxAmount"><th mat-header-cell *matHeaderCellDef>Tax</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.taxAmount | currency }}</td></ng-container>
+            <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.total | currency }}</td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="salesColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: salesColumns"></tr>
+          </table>
+        </div>
+      }
+    </mat-tab>
+    <mat-tab label="Tax">
+      @if (tax(); as t) {
+        <div class="report-kpis">
+          <div class="kpi"><span class="kpi__label">Taxable sales</span><span class="kpi__val">{{ t.taxableSales | currency }}</span></div>
+          <div class="kpi"><span class="kpi__label">Tax collected</span><span class="kpi__val">{{ t.taxCollected | currency }}</span></div>
+          <div class="kpi"><span class="kpi__label">Effective rate</span><span class="kpi__val">{{ t.effectiveTaxRate | percent:'1.1-2' }}</span></div>
+        </div>
+        <div class="surface table-scroll">
+          <table mat-table [dataSource]="t.rows" class="aw-table">
+            <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let r">{{ r.date | date:'mediumDate' }}</td></ng-container>
+            <ng-container matColumnDef="taxableAmount"><th mat-header-cell *matHeaderCellDef>Taxable</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.taxableAmount | currency }}</td></ng-container>
+            <ng-container matColumnDef="taxAmount"><th mat-header-cell *matHeaderCellDef>Tax</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.taxAmount | currency }}</td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="taxColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: taxColumns"></tr>
+          </table>
+        </div>
+      }
+    </mat-tab>
+    <mat-tab label="Technicians">
+      @if (productivity(); as p) {
+        <div class="surface table-scroll">
+          <table mat-table [dataSource]="p.technicians" class="aw-table">
+            <ng-container matColumnDef="userName"><th mat-header-cell *matHeaderCellDef>Technician</th><td mat-cell *matCellDef="let r">{{ r.userName }}</td></ng-container>
+            <ng-container matColumnDef="totalHours"><th mat-header-cell *matHeaderCellDef>Hours</th><td mat-cell *matCellDef="let r" class="cell-mono">{{ r.totalHours | number:'1.1-1' }}</td></ng-container>
+            <ng-container matColumnDef="jobsAssigned"><th mat-header-cell *matHeaderCellDef>Assigned</th><td mat-cell *matCellDef="let r">{{ r.jobsAssigned }}</td></ng-container>
+            <ng-container matColumnDef="jobsCompleted"><th mat-header-cell *matHeaderCellDef>Completed</th><td mat-cell *matCellDef="let r">{{ r.jobsCompleted }}</td></ng-container>
+            <ng-container matColumnDef="openTimeEntries"><th mat-header-cell *matHeaderCellDef>Open clocks</th><td mat-cell *matCellDef="let r">{{ r.openTimeEntries }}</td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="techColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: techColumns"></tr>
+          </table>
+        </div>
+      }
+    </mat-tab>
+  </mat-tab-group>
+}

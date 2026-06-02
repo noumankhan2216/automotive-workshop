@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<INotificationService, EmailNotificationService>();
+        services.AddScoped<IUserDirectoryService, UserDirectoryService>();
         services.AddSingleton<IPdfService, PdfDocumentService>();
 
         // Register DbContext as DbContext for application services
