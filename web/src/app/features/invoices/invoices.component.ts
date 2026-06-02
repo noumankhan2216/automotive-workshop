@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -8,13 +9,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { Invoice, InvoiceStatus } from '../../core/models/api.models';
 import { humanize, invoiceBadge, normalizeInvoiceStatus, INVOICE_STATUSES } from '../../core/utils/status.util';
+import { openPdfBlob } from '../../core/utils/pdf.util';
 import { InvoiceCreateDialog } from './invoice-create.dialog';
-import { InvoicePreviewDialog } from './invoice-preview.dialog';
 
 @Component({
   selector: 'app-invoices',
@@ -30,6 +32,7 @@ import { InvoicePreviewDialog } from './invoice-preview.dialog';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     MatDialogModule
   ],
   templateUrl: './invoices.component.html',
@@ -39,6 +42,7 @@ export class InvoicesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly invoices = signal<Invoice[]>([]);
@@ -83,11 +87,14 @@ export class InvoicesComponent implements OnInit {
       });
   }
 
-  openPreview(invoice: Invoice): void {
-    this.dialog.open(InvoicePreviewDialog, {
-      panelClass: 'aw-dialog',
-      data: { id: invoice.id },
-      autoFocus: false
+  open(invoice: Invoice): void {
+    this.router.navigate(['/invoices', invoice.id]);
+  }
+
+  downloadPdf(invoice: Invoice): void {
+    this.api.invoicePdf(invoice.id).subscribe({
+      next: blob => openPdfBlob(blob),
+      error: () => this.snack.open('Could not generate PDF', 'Dismiss', { duration: 3000 })
     });
   }
 

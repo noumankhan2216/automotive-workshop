@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/services/api.service';
-import { InvoiceDetail } from '../../core/models/api.models';
+import { InvoiceDetail, InvoiceLine } from '../../core/models/api.models';
 import { humanize, invoiceBadge, normalizeInvoiceStatus } from '../../core/utils/status.util';
 
 export interface InvoicePreviewData {
@@ -35,71 +35,96 @@ export interface InvoicePreviewData {
       } @else {
         @if (invoice(); as inv) {
         <div class="iv-doc">
-          <div class="iv-top">
+          <!-- Header -->
+          <header class="iv-head">
             <div class="iv-brand">
               <div class="iv-logo">A</div>
-              <div>
-                <div class="iv-brand-name">AutoWorks</div>
-                <div class="iv-brand-sub">Workshop Manager</div>
-              </div>
+              <span class="iv-wordmark">AutoWorks</span>
             </div>
-            <div class="iv-doc-meta">
-              <div class="iv-doc-title">INVOICE</div>
-              <div class="iv-doc-num">{{ inv.invoiceNumber }}</div>
-              <span class="badge" [class]="badge(inv.status)">{{ humanize(inv.status) }}</span>
+            <div class="iv-head-right">
+              <div class="iv-title">INVOICE</div>
+              <div class="iv-invno">Invoice# {{ inv.invoiceNumber }}</div>
             </div>
-          </div>
+          </header>
 
-          <div class="iv-parties">
-            <div>
+          <!-- Company + balance due -->
+          <section class="iv-meta">
+            <address class="iv-company">
+              AutoWorks Workshop SMC Private Limited<br />
+              NTN: G463350-3<br />
+              100 Garage Lane, Gulberg 3<br />
+              Lahore, Punjab 54000<br />
+              Pakistan
+            </address>
+            <div class="iv-balance">
+              <div class="iv-balance-label">Balance Due</div>
+              <div class="iv-balance-amt">{{ balanceDue(inv) | currency }}</div>
+            </div>
+          </section>
+
+          <!-- Bill to + dates -->
+          <section class="iv-parties">
+            <div class="iv-billto">
               <div class="iv-label">Bill To</div>
               <div class="iv-strong">{{ inv.customerName }}</div>
             </div>
             <div class="iv-dates">
-              <div class="iv-label">Details</div>
-              <div class="iv-row"><span>Issued</span><span>{{ inv.issuedAt | date:'mediumDate' }}</span></div>
-              <div class="iv-row"><span>Due</span><span>{{ inv.dueDate ? (inv.dueDate | date:'mediumDate') : '—' }}</span></div>
-              @if (inv.paidAt) {
-                <div class="iv-row"><span>Paid</span><span>{{ inv.paidAt | date:'mediumDate' }}</span></div>
-              }
+              <div class="iv-drow"><span class="iv-dlabel">Invoice Date :</span><span>{{ inv.issuedAt | date:'dd MMM yyyy' }}</span></div>
+              <div class="iv-drow"><span class="iv-dlabel">Terms :</span><span>{{ terms(inv) }}</span></div>
+              <div class="iv-drow"><span class="iv-dlabel">Due Date :</span><span>{{ inv.dueDate ? (inv.dueDate | date:'dd MMM yyyy') : '—' }}</span></div>
             </div>
-          </div>
+          </section>
 
+          <!-- Line items -->
           <table class="iv-table">
             <thead>
               <tr>
-                <th>Description</th>
+                <th class="c-num">#</th>
+                <th>Item &amp; Description</th>
                 <th class="r">Qty</th>
-                <th class="r">Unit Price</th>
+                <th class="r">Tax</th>
                 <th class="r">Amount</th>
               </tr>
             </thead>
             <tbody>
-              @for (line of inv.lines; track line.id) {
+              @for (line of inv.lines; track line.id; let i = $index) {
                 <tr>
+                  <td class="c-num">{{ i + 1 }}</td>
                   <td class="desc">{{ line.description }}</td>
-                  <td class="r">{{ line.quantity }}</td>
-                  <td class="r">{{ line.unitPrice | currency }}</td>
-                  <td class="r">{{ line.lineTotal | currency }}</td>
+                  <td class="r">{{ line.quantity | number:'1.0-2' }}</td>
+                  <td class="r">{{ lineTax(line, inv) | number:'1.2-2' }}</td>
+                  <td class="r">{{ line.lineTotal | number:'1.2-2' }}</td>
                 </tr>
               } @empty {
-                <tr><td colspan="4" class="iv-empty">No line items.</td></tr>
+                <tr><td colspan="5" class="iv-empty">No line items.</td></tr>
               }
             </tbody>
           </table>
 
-          <div class="iv-totals">
-            <div class="iv-row"><span>Subtotal</span><span>{{ inv.subTotal | currency }}</span></div>
-            <div class="iv-row"><span>Tax ({{ (inv.taxRate * 100) | number:'1.0-2' }}%)</span><span>{{ inv.taxAmount | currency }}</span></div>
-            <div class="iv-row iv-grand"><span>Total</span><span>{{ inv.total | currency }}</span></div>
-          </div>
+          <!-- Totals -->
+          <section class="iv-totals">
+            <div class="iv-trow"><span>Sub Total</span><span>{{ inv.subTotal | number:'1.2-2' }}</span></div>
+            <div class="iv-trow"><span>Sales Tax ({{ (inv.taxRate * 100) | number:'1.0-2' }}%)</span><span>{{ inv.taxAmount | number:'1.2-2' }}</span></div>
+            <div class="iv-trow iv-total"><span>Total</span><span>{{ inv.total | currency }}</span></div>
+            <div class="iv-trow iv-balrow"><span>Balance Due</span><span>{{ balanceDue(inv) | currency }}</span></div>
+          </section>
 
-          @if (inv.notes) {
-            <div class="iv-notes">
-              <div class="iv-label">Notes</div>
-              <p>{{ inv.notes }}</p>
+          <!-- Payment + notes -->
+          <footer class="iv-foot">
+            <div class="iv-pay">
+              <div class="iv-label">Payment Details</div>
+              <div>Account Title: AutoWorks Workshop (SMC-Private) Limited</div>
+              <div>Bank Name: Meezan Bank Limited</div>
+              <div>Account Number: 1160 0112 1802 06</div>
+              <div>IBAN: PK88 MEZN 0011 6001 1218 0206</div>
             </div>
-          }
+            @if (inv.notes) {
+              <div class="iv-notes">
+                <div class="iv-label">Notes</div>
+                <p>{{ inv.notes }}</p>
+              </div>
+            }
+          </footer>
         </div>
         } @else {
           <div class="iv-center iv-error">
@@ -117,109 +142,132 @@ export interface InvoicePreviewData {
       top: 8px;
       right: 8px;
       z-index: 2;
+      background: rgba(255, 255, 255, 0.9);
       color: var(--aw-text-muted);
     }
     .iv-content {
-      width: 640px;
+      width: 720px;
       max-width: 100%;
-      max-height: 82vh;
+      max-height: 85vh;
       padding: 0;
+      color: #1f2937;
     }
     .iv-center { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 4rem 1rem; color: var(--aw-text-muted); }
     .iv-error mat-icon { font-size: 40px; width: 40px; height: 40px; opacity: 0.4; }
 
-    .iv-doc { padding: 2.25rem 2.25rem 2rem; }
+    .iv-doc { padding: 2.5rem 2.5rem 2rem; font-size: 0.85rem; line-height: 1.5; }
 
-    .iv-top {
+    /* Header */
+    .iv-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 1rem;
-      padding-bottom: 1.1rem;
-      border-bottom: 2px solid var(--aw-primary);
     }
-    .iv-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .iv-brand { display: flex; align-items: center; gap: 0.6rem; }
     .iv-logo {
       display: grid; place-items: center;
-      width: 44px; height: 44px; border-radius: 11px;
+      width: 40px; height: 40px; border-radius: 10px;
       background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: #fff; font-weight: 800; font-size: 1.25rem;
+      color: #fff; font-weight: 800; font-size: 1.15rem;
     }
-    .iv-brand-name { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
-    .iv-brand-sub { font-size: 0.75rem; color: var(--aw-text-muted); }
-    .iv-doc-meta { text-align: right; }
-    .iv-doc-title { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.08em; color: #1e293b; }
-    .iv-doc-num { font-size: 0.8rem; color: var(--aw-text-muted); margin: 2px 0 6px; }
+    .iv-wordmark { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.03em; color: #111827; }
+    .iv-head-right { text-align: right; }
+    .iv-title { font-size: 2.1rem; font-weight: 300; letter-spacing: 0.04em; color: #4b5563; line-height: 1; }
+    .iv-invno { font-size: 0.82rem; font-weight: 700; color: #111827; margin-top: 0.4rem; }
 
+    /* Company + balance */
+    .iv-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-top: 1.75rem;
+    }
+    .iv-company { font-style: normal; color: #4b5563; font-size: 0.8rem; line-height: 1.6; }
+    .iv-balance { text-align: right; min-width: 180px; }
+    .iv-balance-label { font-size: 0.8rem; font-weight: 700; color: #4b5563; }
+    .iv-balance-amt { font-size: 1.05rem; font-weight: 800; color: #111827; margin-top: 0.15rem; }
+
+    /* Bill to + dates */
     .iv-parties {
       display: flex;
       justify-content: space-between;
       gap: 2rem;
-      margin-top: 1.5rem;
+      margin-top: 2rem;
     }
-    .iv-label {
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;
-    }
-    .iv-strong { font-weight: 700; font-size: 0.95rem; }
-    .iv-dates { min-width: 220px; }
-    .iv-row {
-      display: flex; justify-content: space-between; gap: 1.5rem;
-      font-size: 0.85rem; padding: 2px 0;
-    }
-    .iv-row > span:first-child { color: var(--aw-text-muted); }
+    .iv-label { font-size: 0.8rem; font-weight: 600; color: #6b7280; margin-bottom: 0.3rem; }
+    .iv-strong { font-weight: 700; font-size: 0.95rem; color: #111827; }
+    .iv-billto .iv-strong + * { color: #4b5563; }
+    .iv-dates { min-width: 260px; }
+    .iv-drow { display: flex; justify-content: space-between; gap: 1.5rem; padding: 3px 0; }
+    .iv-dlabel { color: #6b7280; }
 
+    /* Table */
     .iv-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1.75rem;
     }
     .iv-table thead th {
+      background: #374151;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.8rem;
       text-align: left;
-      font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-      color: #94a3b8;
-      background: #f8fafc;
-      padding: 0.6rem 0.75rem;
-      border-bottom: 1px solid var(--aw-border);
+      padding: 0.6rem 0.8rem;
     }
+    .iv-table th.c-num, .iv-table td.c-num { width: 36px; text-align: left; color: #6b7280; }
     .iv-table th.r, .iv-table td.r { text-align: right; }
     .iv-table tbody td {
-      padding: 0.7rem 0.75rem;
-      font-size: 0.875rem;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 0.75rem 0.8rem;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
     }
-    .iv-table td.desc { font-weight: 600; }
-    .iv-empty { text-align: center; color: var(--aw-text-muted); padding: 1.5rem !important; }
+    .iv-table td.desc { color: #111827; font-weight: 600; }
+    .iv-empty { text-align: center !important; color: var(--aw-text-muted); padding: 1.5rem !important; }
 
+    /* Totals */
     .iv-totals {
-      margin-top: 1rem;
+      margin-top: 1.25rem;
       margin-left: auto;
-      width: 280px;
+      width: 320px;
     }
-    .iv-totals .iv-row { padding: 0.3rem 0.75rem; }
-    .iv-grand {
-      border-top: 2px solid var(--aw-border);
-      margin-top: 0.35rem;
-      padding-top: 0.6rem !important;
-      font-size: 1.05rem; font-weight: 800;
+    .iv-trow { display: flex; justify-content: space-between; gap: 1.5rem; padding: 0.45rem 0.8rem; }
+    .iv-trow > span:first-child { color: #4b5563; }
+    .iv-total { font-weight: 800; color: #111827; }
+    .iv-total > span:first-child { color: #111827; }
+    .iv-balrow {
+      background: #f3f4f6;
+      font-weight: 800;
+      color: #111827;
+      border-radius: 4px;
     }
-    .iv-grand > span:first-child { color: var(--aw-text) !important; }
-    .iv-grand > span:last-child { color: var(--aw-primary); }
+    .iv-balrow > span:first-child { color: #111827; }
 
-    .iv-notes {
-      margin-top: 1.5rem;
-      padding: 0.9rem 1.1rem;
-      background: #f0f7ff;
-      border: 1px solid #dbeafe;
-      border-radius: var(--aw-radius-sm);
+    /* Footer */
+    .iv-foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.78rem;
+      color: #4b5563;
+      line-height: 1.7;
     }
-    .iv-notes p { margin: 0; font-size: 0.85rem; color: #334155; }
+    .iv-notes { max-width: 260px; }
+    .iv-notes p { margin: 0; }
 
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       .iv-doc { padding: 2rem 1.1rem 1.5rem; }
-      .iv-parties { flex-direction: column; gap: 1rem; }
+      .iv-head { flex-direction: column; gap: 0.75rem; }
+      .iv-head-right { text-align: left; }
+      .iv-meta, .iv-parties, .iv-foot { flex-direction: column; gap: 1rem; }
+      .iv-balance { text-align: left; min-width: 0; }
       .iv-dates { min-width: 0; }
       .iv-totals { width: 100%; }
+      .iv-table { font-size: 0.78rem; }
     }
   `]
 })
@@ -242,5 +290,24 @@ export class InvoicePreviewDialog implements OnInit {
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  /** Outstanding balance: zero once the invoice has been paid. */
+  balanceDue(inv: InvoiceDetail): number {
+    return inv.status === 'Paid' ? 0 : inv.total;
+  }
+
+  /** Per-line tax derived from the invoice tax rate. */
+  lineTax(line: InvoiceLine, inv: InvoiceDetail): number {
+    return Math.round(line.lineTotal * inv.taxRate * 100) / 100;
+  }
+
+  /** Payment terms label, e.g. "Net 14". */
+  terms(inv: InvoiceDetail): string {
+    if (!inv.dueDate) return 'Due on receipt';
+    const days = Math.round(
+      (new Date(inv.dueDate).getTime() - new Date(inv.issuedAt).getTime()) / 86_400_000
+    );
+    return days > 0 ? `Net ${days}` : 'Due on receipt';
   }
 }

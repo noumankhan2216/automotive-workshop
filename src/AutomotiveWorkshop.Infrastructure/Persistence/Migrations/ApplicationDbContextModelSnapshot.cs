@@ -65,6 +65,99 @@ namespace AutomotiveWorkshop.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Estimate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConvertedWorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EstimateNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InternalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("Estimates");
+                });
+
+            modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.EstimateItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EstimateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("ServiceCatalogItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstimateId");
+
+                    b.HasIndex("ServiceCatalogItemId");
+
+                    b.ToTable("EstimateItems");
+                });
+
             modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -315,6 +408,9 @@ namespace AutomotiveWorkshop.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("CustomerNotes")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("EstimateId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("InternalNotes")
                         .HasColumnType("text");
@@ -616,6 +712,42 @@ namespace AutomotiveWorkshop.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Estimate", b =>
+                {
+                    b.HasOne("AutomotiveWorkshop.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutomotiveWorkshop.Domain.Entities.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.EstimateItem", b =>
+                {
+                    b.HasOne("AutomotiveWorkshop.Domain.Entities.Estimate", "Estimate")
+                        .WithMany("Items")
+                        .HasForeignKey("EstimateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutomotiveWorkshop.Domain.Entities.ServiceCatalogItem", "ServiceCatalogItem")
+                        .WithMany()
+                        .HasForeignKey("ServiceCatalogItemId");
+
+                    b.Navigation("Estimate");
+
+                    b.Navigation("ServiceCatalogItem");
+                });
+
             modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Invoice", b =>
                 {
                     b.HasOne("AutomotiveWorkshop.Domain.Entities.Customer", "Customer")
@@ -749,6 +881,11 @@ namespace AutomotiveWorkshop.Infrastructure.Persistence.Migrations
                     b.Navigation("Vehicles");
 
                     b.Navigation("WorkOrders");
+                });
+
+            modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Estimate", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("AutomotiveWorkshop.Domain.Entities.Invoice", b =>

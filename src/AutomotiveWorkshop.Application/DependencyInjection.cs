@@ -14,8 +14,11 @@ public static class DependencyInjection
 
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IVehicleService, VehicleService>();
+        services.AddScoped<IEstimateService, EstimateService>();
         services.AddScoped<IWorkOrderService, WorkOrderService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+        services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IDashboardService, DashboardService>();
 
         return services;

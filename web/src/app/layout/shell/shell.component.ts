@@ -41,10 +41,11 @@ export class ShellComponent {
 
   readonly navItems = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
-    { label: 'Customers', route: '/customers', icon: 'people' },
-    { label: 'Vehicles', route: '/vehicles', icon: 'directions_car' },
+    { label: 'Estimates', route: '/estimates', icon: 'request_quote' },
     { label: 'Work Orders', route: '/work-orders', icon: 'build' },
-    { label: 'Invoices', route: '/invoices', icon: 'receipt_long' }
+    { label: 'Invoices', route: '/invoices', icon: 'receipt_long' },
+    { label: 'Customers', route: '/customers', icon: 'people' },
+    { label: 'Vehicles', route: '/vehicles', icon: 'directions_car' }
   ];
 
   private readonly currentUrl = toSignal(
@@ -57,7 +58,10 @@ export class ShellComponent {
 
   readonly activeLabel = computed(() => {
     const url = this.currentUrl();
-    return this.navItems.find(i => url.startsWith(i.route))?.label ?? 'Dashboard';
+    const match = [...this.navItems]
+      .sort((a, b) => b.route.length - a.route.length)
+      .find(i => url === i.route || url.startsWith(i.route + '/'));
+    return match?.label ?? 'Dashboard';
   });
 
   readonly initials = computed(() => {

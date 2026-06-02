@@ -81,6 +81,23 @@ export class VehiclesComponent implements OnInit {
       });
   }
 
+  edit(vehicle: Vehicle): void {
+    this.dialog
+      .open(VehicleFormDialog, { panelClass: 'aw-dialog', autoFocus: 'first-tabbable', data: { vehicle } })
+      .afterClosed()
+      .subscribe((payload: CreateVehicleRequest | undefined) => {
+        if (!payload) return;
+        const { customerId, ...update } = payload;
+        this.api.updateVehicle(vehicle.id, update).subscribe({
+          next: () => {
+            this.snack.open('Vehicle updated', 'Dismiss', { duration: 2500 });
+            this.load(this.searchTerm.trim());
+          },
+          error: () => this.snack.open('Could not update vehicle', 'Dismiss', { duration: 3000 })
+        });
+      });
+  }
+
   remove(vehicle: Vehicle): void {
     if (!confirm(`Delete ${vehicle.year} ${vehicle.make} ${vehicle.model}?`)) return;
     this.api.deleteVehicle(vehicle.id).subscribe({

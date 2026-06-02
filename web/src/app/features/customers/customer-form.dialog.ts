@@ -1,11 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CreateCustomerRequest } from '../../core/models/api.models';
+import { CreateCustomerRequest, Customer } from '../../core/models/api.models';
+
+export interface CustomerFormData {
+  customer?: Customer;
+}
 
 @Component({
   selector: 'app-customer-form-dialog',
@@ -19,7 +23,7 @@ import { CreateCustomerRequest } from '../../core/models/api.models';
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>New Customer</h2>
+    <h2 mat-dialog-title>{{ isEdit ? 'Edit Customer' : 'New Customer' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
       <mat-dialog-content class="form-grid">
         <mat-form-field appearance="outline" class="span-2">
@@ -57,7 +61,7 @@ import { CreateCustomerRequest } from '../../core/models/api.models';
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancel</button>
         <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
-          Save Customer
+          {{ isEdit ? 'Save Changes' : 'Save Customer' }}
         </button>
       </mat-dialog-actions>
     </form>
@@ -80,13 +84,16 @@ import { CreateCustomerRequest } from '../../core/models/api.models';
 export class CustomerFormDialog {
   private readonly fb = inject(FormBuilder);
   private readonly dialogRef = inject(MatDialogRef<CustomerFormDialog>);
+  private readonly data = inject<CustomerFormData>(MAT_DIALOG_DATA, { optional: true });
+
+  readonly isEdit = !!this.data?.customer;
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    email: ['', Validators.email],
-    phone: [''],
-    address: [''],
-    notes: ['']
+    name: [this.data?.customer?.name ?? '', Validators.required],
+    email: [this.data?.customer?.email ?? '', Validators.email],
+    phone: [this.data?.customer?.phone ?? ''],
+    address: [this.data?.customer?.address ?? ''],
+    notes: [this.data?.customer?.notes ?? '']
   });
 
   save(): void {

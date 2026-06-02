@@ -67,6 +67,77 @@ public static class DatabaseSeeder
         await db.SaveChangesAsync();
 
         await SeedDemoDataAsync(db);
+        await SeedDemoEstimatesAsync(db);
+    }
+
+    /// <summary>Idempotent estimate seeding that reuses already-seeded demo customers/vehicles,
+    /// so it works even when the rest of the demo data was seeded in a prior run.</summary>
+    private static async Task SeedDemoEstimatesAsync(ApplicationDbContext db)
+    {
+        if (await db.Estimates.AnyAsync(e => e.EstimateNumber.StartsWith("EST-DEMO-")))
+            return;
+
+        var vehicles = await db.Vehicles.Include(v => v.Customer).ToListAsync();
+        if (vehicles.Count == 0) return;
+
+        Vehicle? Find(string make, string model) =>
+            vehicles.FirstOrDefault(v => v.Make == make && v.Model == model);
+
+        var now = DateTime.UtcNow;
+        const decimal taxRate = 0.10m;
+        var estimates = new List<Estimate>();
+
+        if (Find("Honda", "Civic") is { } civic)
+        {
+            estimates.Add(new Estimate
+            {
+                EstimateNumber = "EST-DEMO-0001", CustomerId = civic.CustomerId, VehicleId = civic.Id,
+                Status = EstimateStatus.Sent, TaxRate = taxRate,
+                CreatedAt = now.AddDays(-1), ValidUntil = now.AddDays(29),
+                CustomerNotes = "AC not cooling — please advise.",
+                Items =
+                {
+                    new EstimateItem { Description = "AC System Diagnostic", Quantity = 1, UnitPrice = 89.99m },
+                    new EstimateItem { Description = "AC Recharge (R-134a)", Quantity = 1, UnitPrice = 129.99m }
+                }
+            });
+        }
+
+        if (Find("BMW", "330i") is { } bmw)
+        {
+            estimates.Add(new Estimate
+            {
+                EstimateNumber = "EST-DEMO-0002", CustomerId = bmw.CustomerId, VehicleId = bmw.Id,
+                Status = EstimateStatus.Approved, TaxRate = taxRate,
+                CreatedAt = now.AddDays(-3), ValidUntil = now.AddDays(27), ApprovedAt = now.AddDays(-1),
+                CustomerNotes = "Approved — schedule for next week.",
+                Items =
+                {
+                    new EstimateItem { Description = "Front Brake Pads & Rotors", Quantity = 1, UnitPrice = 420.00m },
+                    new EstimateItem { Description = "Brake Fluid Flush", Quantity = 1, UnitPrice = 79.99m }
+                }
+            });
+        }
+
+        if (Find("Subaru", "Outback") is { } subaru)
+        {
+            estimates.Add(new Estimate
+            {
+                EstimateNumber = "EST-DEMO-0003", CustomerId = subaru.CustomerId, VehicleId = subaru.Id,
+                Status = EstimateStatus.Draft, TaxRate = taxRate,
+                CreatedAt = now.AddHours(-5), ValidUntil = now.AddDays(30),
+                Items =
+                {
+                    new EstimateItem { Description = "Head Gasket Inspection", Quantity = 1, UnitPrice = 150.00m }
+                }
+            });
+        }
+
+        if (estimates.Count > 0)
+        {
+            db.Estimates.AddRange(estimates);
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task SeedDemoDataAsync(ApplicationDbContext db)

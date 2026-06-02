@@ -63,6 +63,33 @@ export interface WorkOrder {
   totalAmount: number;
 }
 
+export interface WorkOrderItem {
+  id: string;
+  serviceCatalogItemId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface WorkOrderDetail {
+  id: string;
+  workOrderNumber: string;
+  customerId: string;
+  customerName: string;
+  vehicleId: string;
+  vehicleDescription: string;
+  estimateId?: string;
+  status: WorkOrderStatus;
+  assignedToUserId?: string;
+  customerNotes?: string;
+  internalNotes?: string;
+  openedAt: string;
+  completedAt?: string;
+  items: WorkOrderItem[];
+  totalAmount: number;
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -104,6 +131,63 @@ export interface InvoiceDetail {
   lines: InvoiceLine[];
 }
 
+export interface Estimate {
+  id: string;
+  estimateNumber: string;
+  customerId: string;
+  customerName: string;
+  vehicleId: string;
+  vehicleDescription: string;
+  status: EstimateStatus;
+  createdAt: string;
+  validUntil?: string;
+  convertedWorkOrderId?: string;
+  totalAmount: number;
+}
+
+export interface EstimateItem {
+  id: string;
+  serviceCatalogItemId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface EstimateDetail {
+  id: string;
+  estimateNumber: string;
+  customerId: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  vehicleId: string;
+  vehicleDescription: string;
+  vehicleVin?: string;
+  vehicleLicensePlate?: string;
+  status: EstimateStatus;
+  customerNotes?: string;
+  internalNotes?: string;
+  createdAt: string;
+  validUntil?: string;
+  approvedAt?: string;
+  convertedWorkOrderId?: string;
+  items: EstimateItem[];
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  total: number;
+}
+
+export interface ServiceCatalogItem {
+  id: string;
+  name: string;
+  description?: string;
+  defaultPrice: number;
+  isActive: boolean;
+}
+
 export interface DashboardSummary {
   revenueToday: number;
   revenueThisWeek: number;
@@ -125,6 +209,14 @@ export type WorkOrderStatus =
 
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
 
+export type EstimateStatus =
+  | 'Draft'
+  | 'Sent'
+  | 'Approved'
+  | 'Declined'
+  | 'Converted'
+  | 'Expired';
+
 export interface CreateCustomerRequest {
   name: string;
   email?: string;
@@ -132,6 +224,8 @@ export interface CreateCustomerRequest {
   address?: string;
   notes?: string;
 }
+
+export type UpdateCustomerRequest = CreateCustomerRequest;
 
 export interface CreateVehicleRequest {
   customerId: string;
@@ -144,11 +238,24 @@ export interface CreateVehicleRequest {
   color?: string;
 }
 
-export interface WorkOrderItemInput {
+export interface UpdateVehicleRequest {
+  make: string;
+  model: string;
+  year: number;
+  vin?: string;
+  licensePlate?: string;
+  mileage?: number;
+  color?: string;
+}
+
+export interface LineItemInput {
+  serviceCatalogItemId?: string;
   description: string;
   quantity: number;
   unitPrice: number;
 }
+
+export type WorkOrderItemInput = LineItemInput;
 
 export interface CreateWorkOrderRequest {
   customerId: string;
@@ -156,4 +263,20 @@ export interface CreateWorkOrderRequest {
   customerNotes?: string;
   internalNotes?: string;
   items: WorkOrderItemInput[];
+}
+
+export interface CreateEstimateRequest {
+  customerId: string;
+  vehicleId: string;
+  customerNotes?: string;
+  internalNotes?: string;
+  validUntil?: string;
+  items: LineItemInput[];
+}
+
+export interface UpdateEstimateRequest {
+  customerNotes?: string;
+  internalNotes?: string;
+  validUntil?: string;
+  items: LineItemInput[];
 }

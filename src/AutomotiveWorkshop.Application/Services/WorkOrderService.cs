@@ -118,6 +118,7 @@ public class WorkOrderService : IWorkOrderService
     private static WorkOrderDetailDto MapToDetailDto(WorkOrder w) => new(
         w.Id, w.WorkOrderNumber, w.CustomerId, w.Customer.Name, w.VehicleId,
         $"{w.Vehicle.Year} {w.Vehicle.Make} {w.Vehicle.Model}",
+        w.EstimateId,
         w.Status, w.AssignedToUserId, w.CustomerNotes, w.InternalNotes,
         w.OpenedAt, w.CompletedAt,
         w.Items.Select(i => new WorkOrderItemDto(

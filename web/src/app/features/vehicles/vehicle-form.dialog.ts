@@ -1,12 +1,16 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../core/services/api.service';
-import { CreateVehicleRequest, Customer } from '../../core/models/api.models';
+import { CreateVehicleRequest, Customer, Vehicle } from '../../core/models/api.models';
+
+export interface VehicleFormData {
+  vehicle?: Vehicle;
+}
 
 @Component({
   selector: 'app-vehicle-form-dialog',
@@ -20,7 +24,7 @@ import { CreateVehicleRequest, Customer } from '../../core/models/api.models';
     MatButtonModule
   ],
   template: `
-    <h2 mat-dialog-title>New Vehicle</h2>
+    <h2 mat-dialog-title>{{ isEdit ? 'Edit Vehicle' : 'New Vehicle' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
       <mat-dialog-content class="form-grid">
         <mat-form-field appearance="outline" class="span-2">
@@ -74,7 +78,7 @@ import { CreateVehicleRequest, Customer } from '../../core/models/api.models';
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancel</button>
         <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
-          Save Vehicle
+          {{ isEdit ? 'Save Changes' : 'Save Vehicle' }}
         </button>
       </mat-dialog-actions>
     </form>
@@ -98,22 +102,25 @@ export class VehicleFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly dialogRef = inject(MatDialogRef<VehicleFormDialog>);
+  private readonly data = inject<VehicleFormData>(MAT_DIALOG_DATA, { optional: true });
 
+  readonly isEdit = !!this.data?.vehicle;
   readonly customers = signal<Customer[]>([]);
 
   readonly form = this.fb.nonNullable.group({
-    customerId: ['', Validators.required],
-    make: ['', Validators.required],
-    model: ['', Validators.required],
-    year: [new Date().getFullYear(), [Validators.required, Validators.min(1900)]],
-    licensePlate: [''],
-    mileage: [null as number | null],
-    color: [''],
-    vin: ['']
+    customerId: [this.data?.vehicle?.customerId ?? '', Validators.required],
+    make: [this.data?.vehicle?.make ?? '', Validators.required],
+    model: [this.data?.vehicle?.model ?? '', Validators.required],
+    year: [this.data?.vehicle?.year ?? new Date().getFullYear(), [Validators.required, Validators.min(1900)]],
+    licensePlate: [this.data?.vehicle?.licensePlate ?? ''],
+    mileage: [this.data?.vehicle?.mileage ?? (null as number | null)],
+    color: [this.data?.vehicle?.color ?? ''],
+    vin: [this.data?.vehicle?.vin ?? '']
   });
 
   ngOnInit(): void {
     this.api.getCustomers(undefined, 1, 200).subscribe(res => this.customers.set(res.items));
+    if (this.isEdit) this.form.controls.customerId.disable();
   }
 
   save(): void {

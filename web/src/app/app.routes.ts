@@ -27,12 +27,30 @@ export const routes: Routes = [
         loadComponent: () => import('./features/vehicles/vehicles.component').then(m => m.VehiclesComponent)
       },
       {
+        path: 'estimates',
+        loadComponent: () => import('./features/estimates/estimates.component').then(m => m.EstimatesComponent)
+      },
+      {
+        path: 'estimates/:id',
+        loadComponent: () => import('./features/estimates/estimate-detail.component').then(m => m.EstimateDetailComponent)
+      },
+      {
         path: 'work-orders',
         loadComponent: () => import('./features/work-orders/work-orders.component').then(m => m.WorkOrdersComponent)
       },
       {
+        path: 'work-orders/:id',
+        loadComponent: () =>
+          import('./features/work-orders/work-order-detail.component').then(m => m.WorkOrderDetailComponent)
+      },
+      {
         path: 'invoices',
         loadComponent: () => import('./features/invoices/invoices.component').then(m => m.InvoicesComponent)
+      },
+      {
+        path: 'invoices/:id',
+        loadComponent: () =>
+          import('./features/invoices/invoice-detail.component').then(m => m.InvoiceDetailComponent)
       }
     ]
   },

@@ -1,0 +1,128 @@
+@if (order(); as wo) {
+  <div class="ed-bar">
+    <div class="ed-bar__left">
+      <button mat-icon-button routerLink="/work-orders" matTooltip="Back to work orders" aria-label="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="ed-bar__title">
+        <span class="ed-bar__num">{{ wo.workOrderNumber }}</span>
+        <span class="badge" [class]="badge(wo.status)">{{ humanize(wo.status) }}</span>
+      </div>
+    </div>
+
+    <div class="ed-bar__actions">
+      @if (wo.estimateId) {
+        <a mat-stroked-button [routerLink]="['/estimates', wo.estimateId]">
+          <mat-icon>request_quote</mat-icon> Source Estimate
+        </a>
+      }
+
+      <button mat-stroked-button [matMenuTriggerFor]="statusMenu" [disabled]="working()">
+        <mat-icon>sync</mat-icon> Update Status
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        @for (s of statuses; track s) {
+          <button mat-menu-item (click)="changeStatus(s)" [disabled]="wo.status === s">
+            <mat-icon>{{ wo.status === s ? 'check' : 'radio_button_unchecked' }}</mat-icon>
+            {{ humanize(s) }}
+          </button>
+        }
+      </mat-menu>
+
+      @if (canInvoice()) {
+        <button mat-flat-button color="primary" (click)="createInvoice()" [disabled]="working()">
+          <mat-icon>receipt_long</mat-icon> Create Invoice
+        </button>
+      }
+
+      <button mat-stroked-button (click)="downloadPdf()">
+        <mat-icon>picture_as_pdf</mat-icon> PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="ed-doc">
+    <header class="ed-head">
+      <div class="ed-brand">
+        <div class="ed-logo">A</div>
+        <span class="ed-wordmark">AutoWorks</span>
+      </div>
+      <div class="ed-head-right">
+        <div class="ed-title">WORK ORDER</div>
+        <div class="ed-num">Order# {{ wo.workOrderNumber }}</div>
+      </div>
+    </header>
+
+    <section class="ed-meta">
+      <address class="ed-company">
+        AutoWorks Workshop SMC Private Limited<br />
+        100 Garage Lane, Gulberg 3<br />
+        Lahore, Punjab 54000<br />
+        Pakistan
+      </address>
+      <div class="ed-est-total">
+        <div class="ed-est-total__label">Job Total</div>
+        <div class="ed-est-total__amt">{{ wo.totalAmount | currency }}</div>
+      </div>
+    </section>
+
+    <section class="ed-parties">
+      <div class="ed-billto">
+        <div class="ed-label">Customer</div>
+        <div class="ed-strong">{{ wo.customerName }}</div>
+      </div>
+      <div class="ed-dates">
+        <div class="ed-drow"><span class="ed-dlabel">Vehicle :</span><span>{{ wo.vehicleDescription }}</span></div>
+        <div class="ed-drow"><span class="ed-dlabel">Opened :</span><span>{{ wo.openedAt | date:'dd MMM yyyy' }}</span></div>
+        <div class="ed-drow">
+          <span class="ed-dlabel">Completed :</span>
+          <span>{{ wo.completedAt ? (wo.completedAt | date:'dd MMM yyyy') : '—' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <table class="ed-table">
+      <thead>
+        <tr>
+          <th class="c-num">#</th>
+          <th>Item &amp; Description</th>
+          <th class="r">Qty</th>
+          <th class="r">Rate</th>
+          <th class="r">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of wo.items; track line.id; let i = $index) {
+          <tr>
+            <td class="c-num">{{ i + 1 }}</td>
+            <td class="desc">{{ line.description }}</td>
+            <td class="r">{{ line.quantity | number:'1.0-2' }}</td>
+            <td class="r">{{ line.unitPrice | number:'1.2-2' }}</td>
+            <td class="r">{{ line.lineTotal | number:'1.2-2' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="ed-empty">No line items.</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <section class="ed-totals">
+      <div class="ed-trow ed-total"><span>Total</span><span>{{ wo.totalAmount | currency }}</span></div>
+    </section>
+
+    @if (wo.customerNotes) {
+      <footer class="ed-foot">
+        <div class="ed-label">Customer Notes</div>
+        <p>{{ wo.customerNotes }}</p>
+      </footer>
+    }
+  </div>
+} @else if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="40" /></div>
+} @else {
+  <div class="empty-state">
+    <mat-icon>error_outline</mat-icon>
+    <p>Could not load this work order.</p>
+    <button mat-stroked-button routerLink="/work-orders">Back to work orders</button>
+  </div>
+}

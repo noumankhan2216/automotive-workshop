@@ -1,5 +1,6 @@
 using AutomotiveWorkshop.Application.DTOs.Vehicles;
 using AutomotiveWorkshop.Application.Services;
+using AutomotiveWorkshop.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +30,7 @@ public class VehiclesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Create([FromBody] CreateVehicleRequest request, CancellationToken ct)
     {
         var vehicle = await _vehicleService.CreateAsync(request, ct);
@@ -36,6 +38,7 @@ public class VehiclesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVehicleRequest request, CancellationToken ct)
     {
         var vehicle = await _vehicleService.UpdateAsync(id, request, ct);
@@ -43,6 +46,7 @@ public class VehiclesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var deleted = await _vehicleService.DeleteAsync(id, ct);

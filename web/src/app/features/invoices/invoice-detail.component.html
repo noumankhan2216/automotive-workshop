@@ -1,0 +1,135 @@
+@if (invoice(); as inv) {
+  <div class="ed-bar">
+    <div class="ed-bar__left">
+      <button mat-icon-button routerLink="/invoices" matTooltip="Back to invoices" aria-label="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="ed-bar__title">
+        <span class="ed-bar__num">{{ inv.invoiceNumber }}</span>
+        <span class="badge" [class]="badge(inv.status)">{{ humanize(inv.status) }}</span>
+      </div>
+    </div>
+
+    <div class="ed-bar__actions">
+      @if (inv.workOrderId) {
+        <a mat-stroked-button [routerLink]="['/work-orders', inv.workOrderId]">
+          <mat-icon>build</mat-icon> Work Order
+        </a>
+      }
+
+      <button mat-stroked-button [matMenuTriggerFor]="statusMenu" [disabled]="working()">
+        <mat-icon>sync</mat-icon> Update Status
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        @for (s of statuses; track s) {
+          <button mat-menu-item (click)="changeStatus(s)" [disabled]="inv.status === s">
+            <mat-icon>{{ inv.status === s ? 'check' : 'radio_button_unchecked' }}</mat-icon>
+            {{ humanize(s) }}
+          </button>
+        }
+      </mat-menu>
+
+      <button mat-stroked-button (click)="downloadPdf()">
+        <mat-icon>picture_as_pdf</mat-icon> PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="ed-doc">
+    <header class="ed-head">
+      <div class="ed-brand">
+        <div class="ed-logo">A</div>
+        <span class="ed-wordmark">AutoWorks</span>
+      </div>
+      <div class="ed-head-right">
+        <div class="ed-title">INVOICE</div>
+        <div class="ed-num">Invoice# {{ inv.invoiceNumber }}</div>
+      </div>
+    </header>
+
+    <section class="ed-meta">
+      <address class="ed-company">
+        AutoWorks Workshop SMC Private Limited<br />
+        NTN: G463350-3<br />
+        100 Garage Lane, Gulberg 3<br />
+        Lahore, Punjab 54000<br />
+        Pakistan
+      </address>
+      <div class="ed-est-total">
+        <div class="ed-est-total__label">Balance Due</div>
+        <div class="ed-est-total__amt">{{ balanceDue(inv) | currency }}</div>
+      </div>
+    </section>
+
+    <section class="ed-parties">
+      <div class="ed-billto">
+        <div class="ed-label">Bill To</div>
+        <div class="ed-strong">{{ inv.customerName }}</div>
+      </div>
+      <div class="ed-dates">
+        <div class="ed-drow"><span class="ed-dlabel">Invoice Date :</span><span>{{ inv.issuedAt | date:'dd MMM yyyy' }}</span></div>
+        <div class="ed-drow"><span class="ed-dlabel">Terms :</span><span>{{ terms(inv) }}</span></div>
+        <div class="ed-drow">
+          <span class="ed-dlabel">Due Date :</span>
+          <span>{{ inv.dueDate ? (inv.dueDate | date:'dd MMM yyyy') : '—' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <table class="ed-table">
+      <thead>
+        <tr>
+          <th class="c-num">#</th>
+          <th>Item &amp; Description</th>
+          <th class="r">Qty</th>
+          <th class="r">Tax</th>
+          <th class="r">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of inv.lines; track line.id; let i = $index) {
+          <tr>
+            <td class="c-num">{{ i + 1 }}</td>
+            <td class="desc">{{ line.description }}</td>
+            <td class="r">{{ line.quantity | number:'1.0-2' }}</td>
+            <td class="r">{{ lineTax(line, inv) | number:'1.2-2' }}</td>
+            <td class="r">{{ line.lineTotal | number:'1.2-2' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="ed-empty">No line items.</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <section class="ed-totals">
+      <div class="ed-trow"><span>Sub Total</span><span>{{ inv.subTotal | number:'1.2-2' }}</span></div>
+      <div class="ed-trow"><span>Sales Tax ({{ (inv.taxRate * 100) | number:'1.0-2' }}%)</span><span>{{ inv.taxAmount | number:'1.2-2' }}</span></div>
+      <div class="ed-trow ed-total"><span>Total</span><span>{{ inv.total | currency }}</span></div>
+      <div class="ed-trow ed-total"><span>Balance Due</span><span>{{ balanceDue(inv) | currency }}</span></div>
+    </section>
+
+    <footer class="ed-foot">
+      <div>
+        <div class="ed-label">Payment Details</div>
+        <div>Account Title: AutoWorks Workshop (SMC-Private) Limited</div>
+        <div>Bank Name: Meezan Bank Limited</div>
+        <div>Account Number: 1160 0112 1802 06</div>
+        <div>IBAN: PK88 MEZN 0011 6001 1218 0206</div>
+      </div>
+      @if (inv.notes) {
+        <div>
+          <div class="ed-label">Notes</div>
+          <p>{{ inv.notes }}</p>
+        </div>
+      }
+    </footer>
+  </div>
+} @else if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="40" /></div>
+} @else {
+  <div class="empty-state">
+    <mat-icon>error_outline</mat-icon>
+    <p>Could not load this invoice.</p>
+    <button mat-stroked-button routerLink="/invoices">Back to invoices</button>
+  </div>
+}

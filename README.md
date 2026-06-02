@@ -70,12 +70,27 @@ App runs at `http://localhost:4200`.
 |---|---|---|
 | POST | `/api/v1/auth/login` | Login |
 | GET | `/api/v1/auth/me` | Current user |
-| GET | `/api/v1/customers` | List customers |
-| GET | `/api/v1/vehicles` | List vehicles |
+| GET/POST/PUT/DELETE | `/api/v1/customers` | Customer CRUD |
+| GET/POST/PUT/DELETE | `/api/v1/vehicles` | Vehicle CRUD |
+| GET | `/api/v1/service-catalog` | Service catalog items (for line-item picker) |
+| GET/POST | `/api/v1/estimates` | List / create estimates |
+| GET | `/api/v1/estimates/{id}` | Estimate detail |
+| PUT | `/api/v1/estimates/{id}` | Edit estimate (notes, validity, line items) |
+| PATCH | `/api/v1/estimates/{id}/status` | Send / approve / decline / expire |
+| POST | `/api/v1/estimates/{id}/convert` | Convert approved estimate → work order |
+| GET | `/api/v1/estimates/{id}/pdf` | Estimate PDF |
 | GET | `/api/v1/work-orders` | List work orders |
+| GET | `/api/v1/work-orders/{id}/pdf` | Work order PDF |
 | GET | `/api/v1/invoices` | List invoices |
+| GET | `/api/v1/invoices/{id}/pdf` | Invoice PDF |
 | GET | `/api/v1/dashboard/summary` | Dashboard KPIs |
 | GET | `/health` | Health check |
+
+### Document workflow (M0a — "Shop Manager" basics)
+
+`Estimate → (approve) → Work Order → (complete) → Invoice`, each printable as a
+PDF. Write endpoints are role-gated (`Admin`, `Manager`, `Receptionist`;
+technicians may update work-order status).
 
 OpenAPI spec available at `/openapi/v1.json` in Development.
 
@@ -99,8 +114,13 @@ docker compose up --build
 - [x] Create work orders (with line items) and change status from the UI
 - [x] Generate invoices from completed work orders and update invoice status
 - [x] Searchable lists, status filters, and colored status badges
-- [ ] PDF export (Phase 1 — next sprint)
-- [ ] Inline editing of existing records (create + delete shipped)
+- [x] **Estimates**: create/edit, send→approve→convert workflow, document-centric detail page
+- [x] **Estimate → Work Order → Invoice** conversion pipeline
+- [x] **Service catalog picker** in estimate & work-order line items
+- [x] **PDF generation** for estimates, work orders, and invoices (QuestPDF)
+- [x] **Inline editing** of customers & vehicles
+- [x] **Role-based authorization** enforced on write endpoints
+- [x] **SMTP email** sending (configurable; logs when `Email:SmtpHost` is empty)
 
 ## Configuration
 
@@ -109,6 +129,7 @@ Key settings in `src/AutomotiveWorkshop.Api/appsettings.Development.json`:
 - `ConnectionStrings:DefaultConnection` — PostgreSQL connection
 - `Jwt:Secret` — JWT signing key (change in production)
 - `Cors:Origins` — Allowed frontend origins
+- `Email:SmtpHost` etc. — SMTP settings; when `SmtpHost` is empty, emails are logged only
 
 ## Development Commands
 

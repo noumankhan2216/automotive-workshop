@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -14,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/services/api.service';
 import { CreateWorkOrderRequest, WorkOrder, WorkOrderStatus } from '../../core/models/api.models';
 import { humanize, normalizeWorkOrderStatus, workOrderBadge, WORK_ORDER_STATUSES } from '../../core/utils/status.util';
+import { openPdfBlob } from '../../core/utils/pdf.util';
 import { WorkOrderFormDialog } from './work-order-form.dialog';
 
 @Component({
@@ -40,6 +42,7 @@ export class WorkOrdersComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly workOrders = signal<WorkOrder[]>([]);
@@ -67,6 +70,10 @@ export class WorkOrdersComponent implements OnInit {
     });
   }
 
+  open(order: WorkOrder): void {
+    this.router.navigate(['/work-orders', order.id]);
+  }
+
   create(): void {
     this.dialog
       .open(WorkOrderFormDialog, { panelClass: 'aw-dialog', autoFocus: 'first-tabbable' })
@@ -81,6 +88,13 @@ export class WorkOrdersComponent implements OnInit {
           error: () => this.snack.open('Could not create work order', 'Dismiss', { duration: 3000 })
         });
       });
+  }
+
+  downloadPdf(order: WorkOrder): void {
+    this.api.workOrderPdf(order.id).subscribe({
+      next: blob => openPdfBlob(blob),
+      error: () => this.snack.open('Could not generate PDF', 'Dismiss', { duration: 3000 })
+    });
   }
 
   changeStatus(order: WorkOrder, status: WorkOrderStatus): void {

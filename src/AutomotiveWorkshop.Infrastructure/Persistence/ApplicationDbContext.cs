@@ -12,6 +12,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<Estimate> Estimates => Set<Estimate>();
+    public DbSet<EstimateItem> EstimateItems => Set<EstimateItem>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<WorkOrderItem> WorkOrderItems => Set<WorkOrderItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
@@ -36,6 +38,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
             e.HasKey(x => x.Id);
             e.HasOne(x => x.Customer).WithMany(x => x.Vehicles).HasForeignKey(x => x.CustomerId);
             e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        builder.Entity<Estimate>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.EstimateNumber).HasMaxLength(50).IsRequired();
+            e.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId);
+            e.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId);
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        builder.Entity<EstimateItem>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Ignore(x => x.LineTotal);
+            e.HasOne(x => x.Estimate).WithMany(x => x.Items).HasForeignKey(x => x.EstimateId);
         });
 
         builder.Entity<WorkOrder>(e =>

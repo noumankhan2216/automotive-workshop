@@ -87,6 +87,22 @@ export class CustomersComponent implements OnInit {
       });
   }
 
+  edit(customer: Customer): void {
+    this.dialog
+      .open(CustomerFormDialog, { panelClass: 'aw-dialog', autoFocus: 'first-tabbable', data: { customer } })
+      .afterClosed()
+      .subscribe((payload: CreateCustomerRequest | undefined) => {
+        if (!payload) return;
+        this.api.updateCustomer(customer.id, payload).subscribe({
+          next: () => {
+            this.snack.open('Customer updated', 'Dismiss', { duration: 2500 });
+            this.load(this.searchTerm.trim());
+          },
+          error: () => this.snack.open('Could not update customer', 'Dismiss', { duration: 3000 })
+        });
+      });
+  }
+
   remove(customer: Customer): void {
     if (!confirm(`Delete customer "${customer.name}"?`)) return;
     this.api.deleteCustomer(customer.id).subscribe({

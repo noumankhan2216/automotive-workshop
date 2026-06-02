@@ -22,6 +22,7 @@ public record WorkOrderDetailDto(
     string CustomerName,
     Guid VehicleId,
     string VehicleDescription,
+    Guid? EstimateId,
     WorkOrderStatus Status,
     string? AssignedToUserId,
     string? CustomerNotes,

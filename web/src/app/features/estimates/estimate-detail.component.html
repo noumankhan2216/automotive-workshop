@@ -1,0 +1,169 @@
+@if (estimate(); as est) {
+  <!-- Action bar -->
+  <div class="ed-bar">
+    <div class="ed-bar__left">
+      <button mat-icon-button routerLink="/estimates" matTooltip="Back to estimates" aria-label="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="ed-bar__title">
+        <span class="ed-bar__num">{{ est.estimateNumber }}</span>
+        <span class="badge" [class]="badge(est.status)">{{ humanize(est.status) }}</span>
+      </div>
+    </div>
+
+    <div class="ed-bar__actions">
+      @if (canEdit()) {
+        <button mat-stroked-button (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+      }
+
+      @switch (status()) {
+        @case ('Draft') {
+          <button mat-flat-button color="primary" (click)="setStatus('Sent')" [disabled]="working()">
+            <mat-icon>send</mat-icon> Send to Customer
+          </button>
+        }
+        @case ('Sent') {
+          <button mat-stroked-button (click)="setStatus('Declined')" [disabled]="working()">
+            <mat-icon>thumb_down</mat-icon> Declined
+          </button>
+          <button mat-flat-button color="primary" (click)="setStatus('Approved')" [disabled]="working()">
+            <mat-icon>thumb_up</mat-icon> Mark Approved
+          </button>
+        }
+        @case ('Approved') {
+          <button mat-flat-button color="primary" (click)="convert()" [disabled]="working()">
+            <mat-icon>build</mat-icon> Convert to Work Order
+          </button>
+        }
+        @case ('Declined') {
+          <button mat-stroked-button (click)="setStatus('Sent')" [disabled]="working()">
+            <mat-icon>send</mat-icon> Re-send
+          </button>
+        }
+        @case ('Converted') {
+          @if (est.convertedWorkOrderId) {
+            <a mat-stroked-button [routerLink]="['/work-orders', est.convertedWorkOrderId]">
+              <mat-icon>build</mat-icon> View Work Order
+            </a>
+          } @else {
+            <a mat-stroked-button routerLink="/work-orders">
+              <mat-icon>build</mat-icon> Work Orders
+            </a>
+          }
+        }
+      }
+
+      <button mat-stroked-button (click)="downloadPdf()">
+        <mat-icon>picture_as_pdf</mat-icon> PDF
+      </button>
+
+      <button mat-icon-button [matMenuTriggerFor]="more" aria-label="More actions">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #more="matMenu">
+        <button mat-menu-item (click)="setStatus('Expired')" [disabled]="!canEdit()">
+          <mat-icon>schedule</mat-icon> Mark expired
+        </button>
+        <button mat-menu-item (click)="remove()" [disabled]="status() === 'Converted'">
+          <mat-icon>delete</mat-icon> Delete
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Document -->
+  <div class="ed-doc">
+    <header class="ed-head">
+      <div class="ed-brand">
+        <div class="ed-logo">A</div>
+        <span class="ed-wordmark">AutoWorks</span>
+      </div>
+      <div class="ed-head-right">
+        <div class="ed-title">ESTIMATE</div>
+        <div class="ed-num">Estimate# {{ est.estimateNumber }}</div>
+      </div>
+    </header>
+
+    <section class="ed-meta">
+      <address class="ed-company">
+        AutoWorks Workshop SMC Private Limited<br />
+        100 Garage Lane, Gulberg 3<br />
+        Lahore, Punjab 54000<br />
+        Pakistan
+      </address>
+      <div class="ed-est-total">
+        <div class="ed-est-total__label">Estimated Total</div>
+        <div class="ed-est-total__amt">{{ est.total | currency }}</div>
+      </div>
+    </section>
+
+    <section class="ed-parties">
+      <div class="ed-billto">
+        <div class="ed-label">Prepared For</div>
+        <div class="ed-strong">{{ est.customerName }}</div>
+        @if (est.customerAddress) { <div>{{ est.customerAddress }}</div> }
+        @if (est.customerPhone) { <div>{{ est.customerPhone }}</div> }
+        @if (est.customerEmail) { <div>{{ est.customerEmail }}</div> }
+      </div>
+      <div class="ed-dates">
+        <div class="ed-drow"><span class="ed-dlabel">Vehicle :</span><span>{{ est.vehicleDescription }}</span></div>
+        @if (est.vehicleLicensePlate) {
+          <div class="ed-drow"><span class="ed-dlabel">Plate :</span><span>{{ est.vehicleLicensePlate }}</span></div>
+        }
+        @if (est.vehicleVin) {
+          <div class="ed-drow"><span class="ed-dlabel">VIN :</span><span>{{ est.vehicleVin }}</span></div>
+        }
+        <div class="ed-drow"><span class="ed-dlabel">Date :</span><span>{{ est.createdAt | date:'dd MMM yyyy' }}</span></div>
+        <div class="ed-drow"><span class="ed-dlabel">Valid Until :</span><span>{{ est.validUntil ? (est.validUntil | date:'dd MMM yyyy') : '—' }}</span></div>
+      </div>
+    </section>
+
+    <table class="ed-table">
+      <thead>
+        <tr>
+          <th class="c-num">#</th>
+          <th>Item &amp; Description</th>
+          <th class="r">Qty</th>
+          <th class="r">Rate</th>
+          <th class="r">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of est.items; track line.id; let i = $index) {
+          <tr>
+            <td class="c-num">{{ i + 1 }}</td>
+            <td class="desc">{{ line.description }}</td>
+            <td class="r">{{ line.quantity | number:'1.0-2' }}</td>
+            <td class="r">{{ line.unitPrice | number:'1.2-2' }}</td>
+            <td class="r">{{ line.lineTotal | number:'1.2-2' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="ed-empty">No line items.</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <section class="ed-totals">
+      <div class="ed-trow"><span>Sub Total</span><span>{{ est.subTotal | number:'1.2-2' }}</span></div>
+      <div class="ed-trow"><span>Tax ({{ (est.taxRate * 100) | number:'1.0-2' }}%)</span><span>{{ est.taxAmount | number:'1.2-2' }}</span></div>
+      <div class="ed-trow ed-total"><span>Total</span><span>{{ est.total | currency }}</span></div>
+    </section>
+
+    @if (est.customerNotes) {
+      <footer class="ed-foot">
+        <div class="ed-label">Notes</div>
+        <p>{{ est.customerNotes }}</p>
+      </footer>
+    }
+  </div>
+} @else if (loading()) {
+  <div class="loading-center"><mat-spinner diameter="40" /></div>
+} @else {
+  <div class="empty-state">
+    <mat-icon>error_outline</mat-icon>
+    <p>Could not load this estimate.</p>
+    <button mat-stroked-button routerLink="/estimates">Back to estimates</button>
+  </div>
+}

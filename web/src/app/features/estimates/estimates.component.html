@@ -1,0 +1,78 @@
+<div class="page-header">
+  <div>
+    <h1>Estimates</h1>
+    <p class="page-header__sub">Quote work, get approval, convert to a job</p>
+  </div>
+  <button mat-flat-button color="primary" (click)="create()">
+    <mat-icon>add</mat-icon>
+    New Estimate
+  </button>
+</div>
+
+<div class="toolbar-row">
+  <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
+    <mat-label>Status</mat-label>
+    <mat-select [(ngModel)]="statusFilter" (ngModelChange)="load()">
+      <mat-option [value]="''">All statuses</mat-option>
+      @for (s of statuses; track s) {
+        <mat-option [value]="s">{{ humanize(s) }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div class="surface">
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="40" /></div>
+  } @else if (estimates().length === 0) {
+    <div class="empty-state">
+      <mat-icon>request_quote</mat-icon>
+      <p>No estimates yet. Create one to quote a customer.</p>
+    </div>
+  } @else {
+    <div class="table-scroll">
+    <table mat-table [dataSource]="estimates()" class="aw-table">
+      <ng-container matColumnDef="number">
+        <th mat-header-cell *matHeaderCellDef>Estimate #</th>
+        <td mat-cell *matCellDef="let row" class="cell-mono">{{ row.estimateNumber }}</td>
+      </ng-container>
+      <ng-container matColumnDef="customer">
+        <th mat-header-cell *matHeaderCellDef>Customer</th>
+        <td mat-cell *matCellDef="let row">{{ row.customerName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="vehicle">
+        <th mat-header-cell *matHeaderCellDef>Vehicle</th>
+        <td mat-cell *matCellDef="let row">{{ row.vehicleDescription }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="badge" [class]="badge(row.status)">{{ humanize(row.status) }}</span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef>Total</th>
+        <td mat-cell *matCellDef="let row" class="cell-mono">{{ row.totalAmount | currency }}</td>
+      </ng-container>
+      <ng-container matColumnDef="validUntil">
+        <th mat-header-cell *matHeaderCellDef>Valid Until</th>
+        <td mat-cell *matCellDef="let row">{{ row.validUntil ? (row.validUntil | date:'mediumDate') : '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="cell-actions">
+          <button mat-icon-button (click)="downloadPdf(row, $event)" matTooltip="Download PDF" aria-label="Download PDF">
+            <mat-icon>picture_as_pdf</mat-icon>
+          </button>
+          <button mat-icon-button (click)="open(row)" matTooltip="Open" aria-label="Open estimate">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="aw-row-clickable" (click)="open(row)"></tr>
+    </table>
+    </div>
+  }
+</div>

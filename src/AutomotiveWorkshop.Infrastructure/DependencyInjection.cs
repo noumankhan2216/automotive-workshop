@@ -19,6 +19,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -57,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<INotificationService, EmailNotificationService>();
+        services.AddSingleton<IPdfService, PdfDocumentService>();
 
         // Register DbContext as DbContext for application services
         services.AddScoped<DbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());

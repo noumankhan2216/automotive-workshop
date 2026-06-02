@@ -9,6 +9,7 @@ public class WorkOrder : AuditableEntity
     public string WorkOrderNumber { get; set; } = string.Empty;
     public Guid CustomerId { get; set; }
     public Guid VehicleId { get; set; }
+    public Guid? EstimateId { get; set; }
     public string? AssignedToUserId { get; set; }
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
     public string? CustomerNotes { get; set; }

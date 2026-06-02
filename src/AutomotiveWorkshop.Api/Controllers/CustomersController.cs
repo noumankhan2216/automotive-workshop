@@ -1,5 +1,6 @@
 using AutomotiveWorkshop.Application.DTOs.Customers;
 using AutomotiveWorkshop.Application.Services;
+using AutomotiveWorkshop.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +30,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request, CancellationToken ct)
     {
         var customer = await _customerService.CreateAsync(request, ct);
@@ -36,6 +38,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerRequest request, CancellationToken ct)
     {
         var customer = await _customerService.UpdateAsync(id, request, ct);
@@ -43,6 +46,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = Roles.FrontOffice)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var deleted = await _customerService.DeleteAsync(id, ct);
