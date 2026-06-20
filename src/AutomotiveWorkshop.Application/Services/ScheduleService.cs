@@ -57,8 +57,8 @@ public class ScheduleService : IScheduleService
         var workOrder = await LoadForUpdate(workOrderId, ct);
         if (workOrder is null) return null;
 
-        workOrder.ScheduledStartAt = request.ScheduledStartAt;
-        workOrder.ScheduledEndAt = request.ScheduledEndAt;
+        workOrder.ScheduledStartAt = request.ScheduledStartAt.UtcDateTime;
+        workOrder.ScheduledEndAt = request.ScheduledEndAt.UtcDateTime;
         workOrder.BayLabel = request.BayLabel?.Trim();
         if (request.AssignedToUserId is not null)
             workOrder.AssignedToUserId = string.IsNullOrWhiteSpace(request.AssignedToUserId) ? null : request.AssignedToUserId;
@@ -102,7 +102,7 @@ public class ScheduleService : IScheduleService
         w.AssignedToUserId,
         assignedName,
         w.BayLabel,
-        w.ScheduledStartAt!.Value,
-        w.ScheduledEndAt!.Value,
+        new DateTimeOffset(DateTime.SpecifyKind(w.ScheduledStartAt!.Value, DateTimeKind.Utc)),
+        new DateTimeOffset(DateTime.SpecifyKind(w.ScheduledEndAt!.Value, DateTimeKind.Utc)),
         w.Items.Sum(i => i.LineTotal));
 }

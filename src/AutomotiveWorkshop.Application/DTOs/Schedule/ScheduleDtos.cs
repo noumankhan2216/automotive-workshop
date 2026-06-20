@@ -11,13 +11,13 @@ public record ScheduleEventDto(
     string? AssignedToUserId,
     string? AssignedToUserName,
     string? BayLabel,
-    DateTime ScheduledStartAt,
-    DateTime ScheduledEndAt,
+    DateTimeOffset ScheduledStartAt,
+    DateTimeOffset ScheduledEndAt,
     decimal TotalAmount);
 
 public record UpdateWorkOrderScheduleRequest(
-    DateTime ScheduledStartAt,
-    DateTime ScheduledEndAt,
+    DateTimeOffset ScheduledStartAt,
+    DateTimeOffset ScheduledEndAt,
     string? BayLabel,
     string? AssignedToUserId);
 

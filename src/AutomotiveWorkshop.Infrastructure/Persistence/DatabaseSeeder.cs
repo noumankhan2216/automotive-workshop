@@ -88,23 +88,23 @@ public static class DatabaseSeeder
 
         if (wo2 is not null && wo2.ScheduledStartAt is null)
         {
-            wo2.ScheduledStartAt = now.Date.AddHours(9);
-            wo2.ScheduledEndAt = now.Date.AddHours(12);
+            wo2.ScheduledStartAt = ToUtc(now.Date.AddHours(9));
+            wo2.ScheduledEndAt = ToUtc(now.Date.AddHours(12));
             wo2.BayLabel = "Bay 1";
             if (techId is not null) wo2.AssignedToUserId = techId;
         }
 
         if (wo3 is not null && wo3.ScheduledStartAt is null)
         {
-            wo3.ScheduledStartAt = now.Date.AddHours(13);
-            wo3.ScheduledEndAt = now.Date.AddHours(16);
+            wo3.ScheduledStartAt = ToUtc(now.Date.AddHours(13));
+            wo3.ScheduledEndAt = ToUtc(now.Date.AddHours(16));
             wo3.BayLabel = "Bay 2";
         }
 
         if (wo5 is not null && wo5.ScheduledStartAt is null)
         {
-            wo5.ScheduledStartAt = now.Date.AddDays(1).AddHours(10);
-            wo5.ScheduledEndAt = now.Date.AddDays(1).AddHours(11);
+            wo5.ScheduledStartAt = ToUtc(now.Date.AddDays(1).AddHours(10));
+            wo5.ScheduledEndAt = ToUtc(now.Date.AddDays(1).AddHours(11));
             wo5.BayLabel = "Bay 1";
         }
 
@@ -402,4 +402,8 @@ public static class DatabaseSeeder
             }).ToList()
         };
     }
+
+    /// <summary>Shop-local wall times from seed data → UTC for timestamptz columns.</summary>
+    private static DateTime ToUtc(DateTime localWall) =>
+        DateTime.SpecifyKind(localWall, DateTimeKind.Local).ToUniversalTime();
 }

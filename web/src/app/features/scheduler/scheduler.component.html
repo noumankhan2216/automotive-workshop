@@ -1,13 +1,16 @@
 <div class="page-header">
   <div>
     <h1>Scheduler</h1>
-    <p class="page-header__sub">Plan bays, assign technicians, drag jobs on the calendar</p>
+    <p class="page-header__sub">Drag jobs onto the grid ({{ hourSlots[0] }}:00–{{ hourSlots[hourSlots.length - 1] }}:00, your local time, 30‑min snap)</p>
   </div>
   <div class="sched-nav">
     <button mat-icon-button (click)="prev()" aria-label="Previous"><mat-icon>chevron_left</mat-icon></button>
     <button mat-stroked-button (click)="today()">Today</button>
     <button mat-icon-button (click)="next()" aria-label="Next"><mat-icon>chevron_right</mat-icon></button>
     <span class="sched-range">{{ rangeLabel() }}</span>
+    @if (saving()) {
+      <mat-spinner diameter="20" />
+    }
   </div>
 </div>
 
@@ -29,11 +32,15 @@
         class="queue-list"
         cdkDropList
         id="unscheduled"
-        [cdkDropListData]="unscheduled()"
-        [cdkDropListConnectedTo]="allDropListIds()"
+        [cdkDropListData]="dropListData('unscheduled')"
+        [cdkDropListConnectedTo]="connectedDropIds()"
         cdkDropListSortingDisabled>
         @for (wo of unscheduled(); track wo.id) {
-          <div class="queue-card" cdkDrag [cdkDragData]="wo">
+          <div
+            class="queue-card"
+            cdkDrag
+            [cdkDragData]="wo"
+            (cdkDragStarted)="onDragStarted($event)">
             <div class="queue-card__num">{{ wo.workOrderNumber }}</div>
             <div class="queue-card__sub">{{ wo.customerName }}</div>
             <div class="queue-card__sub">{{ wo.vehicleDescription }}</div>
@@ -52,7 +59,8 @@
               <div class="month-cell__head">{{ day | date:'d' }}</div>
               @for (ev of eventsForDay(day); track ev.workOrderId) {
                 <button type="button" class="month-ev" (click)="openJob(ev.workOrderId)">
-                  {{ ev.workOrderNumber }}
+                  <span class="month-ev__num">{{ ev.workOrderNumber }}</span>
+                  <span class="month-ev__time">{{ formatTimeRange(ev.scheduledStartAt, ev.scheduledEndAt) }}</span>
                 </button>
               }
             </div>
@@ -61,6 +69,7 @@
       } @else {
         <div class="week-grid" [style.--day-count]="days().length">
           <div class="time-gutter">
+            <div class="time-gutter__spacer"></div>
             @for (h of hourSlots; track h) {
               <div class="time-label" [style.height.px]="slotPx">{{ h }}:00</div>
             }
@@ -72,25 +81,34 @@
                 class="day-col__body"
                 cdkDropList
                 [id]="'day-' + di"
-                [cdkDropListData]="eventsForDay(day)"
-                [cdkDropListConnectedTo]="allDropListIds()"
-                (cdkDropListDropped)="onCalendarDrop(day, $any($event))">
+                [cdkDropListData]="dropListData('day-' + di)"
+                [cdkDropListConnectedTo]="connectedDropIds()"
+                cdkDropListSortingDisabled
+                (cdkDropListDropped)="onCalendarDrop(day, $event)">
                 @for (h of hourSlots; track h) {
-                  <div class="hour-slot" [style.height.px]="slotPx"></div>
+                  <div class="hour-slot" [style.height.px]="slotPx">
+                    <span class="hour-slot__half"></span>
+                  </div>
                 }
                 @for (ev of eventsForDay(day); track ev.workOrderId) {
-                  <button
-                    type="button"
+                  <div
                     class="sched-event"
                     cdkDrag
                     [cdkDragData]="ev"
                     [ngStyle]="eventStyle(ev, day)"
-                    (click)="openJob(ev.workOrderId)"
-                    [matTooltip]="ev.customerName + ' — ' + ev.vehicleDescription">
+                    (cdkDragStarted)="onDragStarted($event)"
+                    (click)="onEventClick(ev.workOrderId, $event)"
+                    [matTooltip]="ev.customerName + ' · ' + ev.vehicleDescription + ' · ' + formatTimeRange(ev.scheduledStartAt, ev.scheduledEndAt)"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="openJob(ev.workOrderId)">
+                    <span class="sched-event__time">{{ formatTimeRange(ev.scheduledStartAt, ev.scheduledEndAt) }}</span>
                     <span class="sched-event__num">{{ ev.workOrderNumber }}</span>
                     <span class="sched-event__sub">{{ ev.assignedToUserName || 'Unassigned' }}</span>
-                    @if (ev.bayLabel) { <span class="sched-event__bay">{{ ev.bayLabel }}</span> }
-                  </button>
+                    @if (ev.bayLabel) {
+                      <span class="sched-event__bay">{{ ev.bayLabel }}</span>
+                    }
+                  </div>
                 }
               </div>
             </div>
